@@ -1,0 +1,9 @@
+# local hygiene — never commit credentials orevaluator data
+__pycache__/
+*.pyc
+.DS_Store
+.aws/
+*.pem
+*.key
+# fresh run outputs stay local until submission packaging decides otherwise
+outputs/*.jsonl
