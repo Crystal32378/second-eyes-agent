@@ -1,1 +1,49 @@
-{"cases": [{"expects_routing": "CLEAR", "fixture_id": "SYN-CLEAR-01", "kind": "image", "note": "Clean synthetic: unambiguous subject, consistent old label. Expect CLEAR without human.", "old_label": "beige flat-lay, single subject"}, {"expects_routing": "CONFLICT", "fixture_id": "SYN-CONFLICT-01", "kind": "image", "note": "Staged conflict: old label contradicts visible content. Expect CONFLICT to human, no overwrite.", "old_label": "claims red dress, staged image shows beige setup"}, {"expects_routing": "UNKNOWN", "fixture_id": "SYN-UNKNOWN-01", "kind": "image", "note": "Staged unknown: heavily cropped, insufficient evidence. Expect UNKNOWN, no guessing.", "old_label": "none"}, {"expects_routing": "CLEAR", "fixture_id": "SYN-CLEAR-02", "kind": "video", "note": "Clean synthetic video: stable single scene. Expect CLEAR.", "old_label": "studio pan, single look"}, {"expects_routing": "UNKNOWN", "fixture_id": "SYN-UNKNOWN-02", "kind": "video", "note": "Staged video unknown: dark short clip. Expect UNKNOWN.", "old_label": "none"}]}
+{
+ "cases": [
+  {
+   "expects_routing": "CLEAR",
+   "fixture_id": "SYN-CLEAR-01",
+   "kind": "image",
+   "note": "Clean synthetic: unambiguous subject, consistent old label. Expect CLEAR without human.",
+   "old_label": "beige flat-lay, single subject",
+   "media": "media/SYN-CLEAR-01.png",
+   "sha256": "74f15706a53f3ff020ac0e88a49ed8f34ff342e9c0f3699ba16485238b189521"
+  },
+  {
+   "expects_routing": "CONFLICT",
+   "fixture_id": "SYN-CONFLICT-01",
+   "kind": "image",
+   "note": "Staged conflict: old label contradicts visible content. Expect CONFLICT to human, no overwrite.",
+   "old_label": "claims red dress, staged image shows beige setup",
+   "media": "media/SYN-CONFLICT-01.png",
+   "sha256": "389e36c2bbd60509f0acf8b1973bce43f1cf3092abde80d3b468980153f62ca6"
+  },
+  {
+   "expects_routing": "UNKNOWN",
+   "fixture_id": "SYN-UNKNOWN-01",
+   "kind": "image",
+   "note": "Staged unknown: heavily cropped, insufficient evidence. Expect UNKNOWN, no guessing.",
+   "old_label": "none",
+   "media": "media/SYN-UNKNOWN-01.png",
+   "sha256": "3468f2ee5a902addd8615ccff5495fc33ab370628bcf8917ad38d3e5956b5dd7"
+  },
+  {
+   "expects_routing": "CLEAR",
+   "fixture_id": "SYN-CLEAR-02",
+   "kind": "video",
+   "note": "Clean synthetic video: stable single scene. Expect CLEAR.",
+   "old_label": "studio pan, single look",
+   "media": "media/SYN-CLEAR-02.mp4",
+   "sha256": "6acce91e7a2a1a308c9ef12ad170c16b47149ae18632263e9a7ce8f4e384686f"
+  },
+  {
+   "expects_routing": "UNKNOWN",
+   "fixture_id": "SYN-UNKNOWN-02",
+   "kind": "video",
+   "note": "Staged video unknown: dark short clip. Expect UNKNOWN.",
+   "old_label": "none",
+   "media": "media/SYN-UNKNOWN-02.mp4",
+   "sha256": "04b99da412341745d130de8f6a454cd0e24b8eac0f78bf0a0a09f04161cd416f"
+  }
+ ]
+}
