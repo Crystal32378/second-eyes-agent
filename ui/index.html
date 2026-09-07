@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Eyes — Most things stay filed. Questions come to you.</title>
+<!--
+  Second Eyes review UI — hackathon-new, written from scratch for this repo.
+  Composition follows the HERO reference (Drawer → Desk):
+    DRAWER (quiet, orderly, not perfect): CLEAR + NEW stay filed.
+      NEW is an observation, never styled as verified truth.
+    DESK (questions reach the human): CONFLICT as a side-by-side pair with
+      BOTH evidences visible (no error icons, no red alerts, no empty-field
+      shaming); UNKNOWN as a ruled-blank card — blank WITH ruled lines, so it
+      reads as deliberately reserved for judgment, not forgotten.
+  One card, two sides: FRONT = machine observation + existing record +
+  provenance/ref; BACK = ruled blank for the human decision.
+  Fully offline: system font stacks only. Synthetic preview data only.
+-->
+<style>
+  :root {
+    --bg: #ebe7df;
+    --paper: #f4f1eb;
+    --paper-2: #e8e3d8;
+    --edge: #b3ada0;
+    --ink-1: #16140f;
+    --ink-3: #6e6757;
+    --rule: rgba(22, 20, 15, 0.14);
+    --serif: "Cormorant Garamond", "Times New Roman", "Songti TC", serif;
+    --sans: "Helvetica Neue", "PingFang TC", system-ui, sans-serif;
+    --mono: "Menlo", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink-1);
+         font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+  header {
+    max-width: 1320px; margin: 0 auto; padding: 40px 32px 20px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-bottom: 1px solid var(--rule);
+  }
+  .mark { font-family: var(--serif); font-size: 34px; letter-spacing: 0.3em; line-height: 1; }
+  .mark small { display: block; font-family: var(--sans); font-size: 10px;
+    letter-spacing: 0.3em; color: var(--ink-3); margin-top: 10px; }
+  .stamp { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-3); text-align: right; line-height: 1.7; }
+  .stamp .ink { display: inline-block; padding: 2px 8px; margin-left: 6px;
+    border: 1px solid var(--ink-3); transform: rotate(-2deg); }
+  .zone-label {
+    max-width: 1320px; margin: 0 auto; padding: 26px 32px 0;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .zone-label strong { color: var(--ink-1); font-weight: 400; }
+  .zone-label span { display: block; margin-top: 6px; letter-spacing: 0.06em;
+    text-transform: none; font-family: var(--sans); font-size: 13px; color: var(--ink-3); }
+  main { max-width: 1320px; margin: 0 auto; padding: 18px 32px 64px; }
+  .drawer, .desk { display: grid; gap: 28px; }
+  .drawer { grid-template-columns: repeat(2, 1fr); }
+  .desk { grid-template-columns: repeat(2, 1fr); }
+  .tray h2 { font-family: var(--mono); font-size: 10px; font-weight: 400;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3);
+    margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .tray h2 .n { color: var(--ink-1); }
+  .card {
+    background: var(--paper); border: 1px solid var(--edge);
+    box-shadow: 0 1px 0 rgba(22,20,15,.05), 0 8px 20px -10px rgba(22,20,15,.18);
+    border-radius: 2px; padding: 10px; margin-bottom: 16px; font-size: 13px;
+  }
+  .card img, .card video { width: 100%; display: block; border-radius: 1px; }
+  .card .id { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; margin: 8px 0 4px; }
+  .card .prov { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-top: 6px; }
+  .card .pencil-note { font-style: italic; color: var(--ink-3); font-size: 12px; margin-top: 6px; }
+  /* CONFLICT pair: two evidences side by side, both kept, no alerts */
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pair .side { border: 1px solid var(--edge); border-radius: 2px; padding: 8px; background: var(--paper-2); }
+  .pair .side h3 { font-family: var(--mono); font-size: 9px; font-weight: 400;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px; }
+  /* UNKNOWN: ruled blank — deliberately reserved, not forgotten */
+  .ruled {
+    background: var(--paper);
+    background-image: repeating-linear-gradient(180deg, transparent 0 22px, var(--rule) 22px 23px);
+    min-height: 120px; border: 1px solid var(--edge); border-radius: 2px; padding: 10px;
+  }
+  .ruled .reserved { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--ink-3); }
+  .pencil { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-top: 8px; }
+  @media (max-width: 1000px) { .drawer, .desk { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="mark">SECOND EYES<small>Most things stay filed. Questions come to you.</small></div>
+  <div class="stamp">Professional track<br>Batch A · 60 assets<span class="ink">synthetic preview</span></div>
+</header>
+
+<div class="zone-label"><strong>The drawer — quiet</strong><span>Stays filed. Orderly, usable, evolving — never styled as verified truth.</span></div>
+<main><div class="drawer" style="grid-column:1/-1; display:grid; grid-template-columns:repeat(2,1fr); gap:28px;">
+  <div class="tray" id="col-CLEAR"><h2>自動歸檔 Clear <span class="n"></span></h2></div>
+  <div class="tray" id="col-NEW"><h2>新發現待驗 New — observation, not conclusion <span class="n"></span></h2></div>
+</div></main>
+
+<div class="zone-label"><strong>The desk — questions reach the human</strong><span>Both evidences stay visible. A ruled blank means reserved for judgment — with the pencil already waiting.</span></div>
+<main><div class="desk" style="grid-column:1/-1; display:grid; grid-template-columns:repeat(2,1fr); gap:28px;">
+  <div class="tray" id="col-CONFLICT"><h2>問人 Conflict — 兩邊都有資料，而且對不上 <span class="n"></span></h2></div>
+  <div class="tray" id="col-UNKNOWN"><h2>問人 Unknown — 刻意不猜 <span class="n"></span></h2></div>
+</div></main>
+
+<script>
+async function load() {
+  const res = await fetch('../fixtures/synthetic/cases.json');
+  const data = await res.json();
+  for (const c of data.cases) {
+    const el = document.getElementById('col-' + c.expects_routing);
+    if (!el) continue;
+    el.querySelector('.n').textContent = '(' + (el.querySelectorAll('.card,.pair,.ruled').length + 1) + ')';
+    const media = c.kind === 'video'
+      ? `<video controls preload="metadata" src="../fixtures/synthetic/${c.media}"></video>`
+      : `<img src="../fixtures/synthetic/${c.media}" alt="${c.fixture_id}">`;
+    const prov = `<div class="prov">sha ${String(c.sha256).slice(0, 12)}… · ref frame:full</div>`;
+    let html = '';
+    if (c.expects_routing === 'CONFLICT') {
+      html = `<div class="pair"><div class="side"><h3>舊標籤 old claim</h3><div>${c.old_label}</div></div>`
+        + `<div class="side"><h3>所見 observed</h3>${media}</div></div>`
+        + `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div><div>${c.note}</div>${prov}</div>`;
+    } else if (c.expects_routing === 'UNKNOWN') {
+      html = `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div>${media}<div>${c.note}</div>${prov}</div>`
+        + `<div class="ruled"><span class="reserved">reserved for human judgment</span></div>`
+        + `<div class="pencil">✎ pencil — judgment begins here</div>`;
+    } else if (c.expects_routing === 'NEW') {
+      html = `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div>${media}<div>${c.note}</div>${prov}`
+        + `<div class="pencil-note">unverified observation — filed, not confirmed</div></div>`;
+    } else {
+      html = `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div>${media}<div>${c.note}</div>${prov}</div>`;
+    }
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    while (d.firstChild) el.appendChild(d.firstChild);
+  }
+}
+load();
+</script>
+</body>
+</html>
