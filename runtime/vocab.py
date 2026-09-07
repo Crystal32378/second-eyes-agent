@@ -13,6 +13,9 @@ Per-token hit counts in the 60 paths (mechanical substring scan):
 
 Zero-hit tokens (white/blue/black/白/snapshot/內衣/褲/深V) are kept as
 harmless counterparts; they can never match and therefore never route.
+"red" has 0 path hits but is REQUIRED by hackathon-new synthetic fixture
+SYN-CONFLICT-01 ("claims red dress") — documented here pre-run, not added
+in response to any run output.
 Excluded deliberately: 蕾絲/波蕾/雪紡 (fabric or series names, not one of
 the three comparable fields).
 
@@ -23,7 +26,7 @@ Matching semantics:
   (e.g. "bralette" wins over "bra" inside "Bralette").
 """
 
-COLOURS = ("beige", "pink", "white", "blue", "black",
+COLOURS = ("beige", "pink", "white", "blue", "black", "red",
            "膚", "粉", "黑", "藍", "白")
 
 ITEM_TYPES = ("bra", "bralette", "balconette", "panty",
