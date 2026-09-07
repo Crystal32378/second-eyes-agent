@@ -1,8 +1,8 @@
-# tidypile-strands-agent (local working folder — NOT YET a git repo)
+# Second Eyes — second-eyes-agent (local working folder, not yet public)
 
 Professional track — Agents for Humans Hackathon.
 
-One-liner: Old photos, messy and many. Clear ones filed automatically. Unclear ones ask you once.
+> Second Eyes — 它先看一遍。沒證據不猜，有衝突才問你。
 
 ## Pre-existing work — DISCLOSED (not claimed as new)
 
@@ -36,8 +36,12 @@ schemas, observations, or outputs are claimed as hackathon-new:
 ## Status
 
 - Phase 1 (no model quota needed): skeleton + disclosure + synthetic
-  fixtures specification (case metadata only, no synthetic media bytes yet) +
-  tool interfaces + logging + reader hash gate. No Bedrock calls.
+  multimodal fixtures (3 images + 2 videos, clearly-synthetic, SHA-pinned in
+  `cases.json`) + tool interfaces + logging + reader hash gate. No Bedrock calls.
+- Routing contract (structural, not prompt-based): tools return evidence or
+  empty; a pure rule function decides CLEAR / CONFLICT / UNKNOWN. The model
+  only describes what it sees and NEVER decides sufficiency — it has no
+  interface to assert what it was not given.
 - Model runs BLOCKED on Bedrock daily token quota (ThrottlingException).
   No mock results are presented as Bedrock results.
 - Protocol: synthetic 3–5 cases first → lock prompt/tools → Batch A 60 blind run.
