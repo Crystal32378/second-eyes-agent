@@ -25,6 +25,10 @@ schemas, observations, or outputs are claimed as hackathon-new:
   `source_relative_path`, `sha256`, `byte_size`, `source_root_id`).
   Legacy `NUDE-xxxxx` sample IDs are NOT canonical IDs.
 - Any Brand Library schema / taxonomy / resolver / UI / code / policy / logs.
+- Hero image desk items are desaturated, aged crops derived from situational
+  photographs gifted by the brand's photographer with social-media usage
+  rights. Not product assets, not archive originals, and not presented as
+  representative archive contents.
 
 ## Hackathon-new (only these are claimed)
 

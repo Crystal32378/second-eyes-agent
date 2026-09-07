@@ -7,7 +7,8 @@
    "note": "Clean synthetic: unambiguous subject, consistent old label. Expect CLEAR without human.",
    "old_label": "beige flat-lay, single subject",
    "media": "media/SYN-CLEAR-01.png",
-   "sha256": "74f15706a53f3ff020ac0e88a49ed8f34ff342e9c0f3699ba16485238b189521"
+   "sha256": "74f15706a53f3ff020ac0e88a49ed8f34ff342e9c0f3699ba16485238b189521",
+   "ref": "synthetic:frame-full"
   },
   {
    "expects_routing": "CONFLICT",
@@ -16,7 +17,13 @@
    "note": "Staged conflict: old label contradicts visible content. Expect CONFLICT to human, no overwrite.",
    "old_label": "claims red dress, staged image shows beige setup",
    "media": "media/SYN-CONFLICT-01.png",
-   "sha256": "389e36c2bbd60509f0acf8b1973bce43f1cf3092abde80d3b468980153f62ca6"
+   "sha256": "389e36c2bbd60509f0acf8b1973bce43f1cf3092abde80d3b468980153f62ca6",
+   "ref": "synthetic:frame-full",
+   "mismatch": {
+    "field": "colour",
+    "old": "red",
+    "observed": "beige"
+   }
   },
   {
    "expects_routing": "UNKNOWN",
@@ -25,7 +32,8 @@
    "note": "Staged unknown: heavily cropped, insufficient evidence. Expect UNKNOWN, no guessing.",
    "old_label": "none",
    "media": "media/SYN-UNKNOWN-01.png",
-   "sha256": "3468f2ee5a902addd8615ccff5495fc33ab370628bcf8917ad38d3e5956b5dd7"
+   "sha256": "3468f2ee5a902addd8615ccff5495fc33ab370628bcf8917ad38d3e5956b5dd7",
+   "ref": "synthetic:frame-full"
   },
   {
    "expects_routing": "CLEAR",
@@ -34,7 +42,8 @@
    "note": "Clean synthetic video: stable single scene. Expect CLEAR.",
    "old_label": "studio pan, single look",
    "media": "media/SYN-CLEAR-02.mp4",
-   "sha256": "6acce91e7a2a1a308c9ef12ad170c16b47149ae18632263e9a7ce8f4e384686f"
+   "sha256": "6acce91e7a2a1a308c9ef12ad170c16b47149ae18632263e9a7ce8f4e384686f",
+   "ref": "synthetic:frames-00:00-00:02"
   },
   {
    "expects_routing": "UNKNOWN",
@@ -43,7 +52,8 @@
    "note": "Staged video unknown: dark short clip. Expect UNKNOWN.",
    "old_label": "none",
    "media": "media/SYN-UNKNOWN-02.mp4",
-   "sha256": "04b99da412341745d130de8f6a454cd0e24b8eac0f78bf0a0a09f04161cd416f"
+   "sha256": "04b99da412341745d130de8f6a454cd0e24b8eac0f78bf0a0a09f04161cd416f",
+   "ref": "synthetic:frames-00:00-00:01"
   },
   {
    "expects_routing": "NEW",
@@ -52,7 +62,8 @@
    "note": "Staged new: observable beige shape, no old label. Expect NEW, filed quiet, no human ping.",
    "old_label": "none",
    "media": "media/SYN-NEW-01.png",
-   "sha256": "342270ca3ebd1ee0ddca341be1689313e6b03b276b5522e731d656da571414aa"
+   "sha256": "342270ca3ebd1ee0ddca341be1689313e6b03b276b5522e731d656da571414aa",
+   "ref": "synthetic:frame-full"
   }
  ]
 }

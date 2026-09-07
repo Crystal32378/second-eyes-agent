@@ -15,7 +15,9 @@
       reads as deliberately reserved for judgment, not forgotten.
   One card, two sides: FRONT = machine observation + existing record +
   provenance/ref; BACK = ruled blank for the human decision.
-  Fully offline: system font stacks only. Synthetic preview data only.
+  Fully offline: no webfonts, no CDN. (Note: --serif names Cormorant Garamond
+  first but it is NOT a system font — expect fallback to Times/Songti.)
+  Synthetic preview data only; refs shown are fixture-declared, not model output.
 -->
 <style>
   :root {
@@ -26,6 +28,7 @@
     --ink-1: #16140f;
     --ink-3: #6e6757;
     --rule: rgba(22, 20, 15, 0.14);
+    --accent: #8b6f47; /* desk only: CONFLICT / UNKNOWN. Never in the drawer. */
     --serif: "Cormorant Garamond", "Times New Roman", "Songti TC", serif;
     --sans: "Helvetica Neue", "PingFang TC", system-ui, sans-serif;
     --mono: "Menlo", "Courier New", monospace;
@@ -84,6 +87,14 @@
   .ruled .reserved { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
     text-transform: uppercase; color: var(--ink-3); }
   .pencil { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-top: 8px; }
+  .mismatch {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    color: var(--accent); margin: 6px 0; padding: 4px 8px;
+    border: 1px solid var(--accent);
+  }
+  /* accent lives on the desk only — never in the drawer */
+  #col-CONFLICT h2, #col-UNKNOWN h2 { color: var(--accent); border-color: var(--accent); }
+  #col-CONFLICT h2 .n, #col-UNKNOWN h2 .n { color: var(--accent); }
   @media (max-width: 1000px) { .drawer, .desk { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -109,19 +120,24 @@
 async function load() {
   const res = await fetch('../fixtures/synthetic/cases.json');
   const data = await res.json();
+  const counts = {};
   for (const c of data.cases) {
     const el = document.getElementById('col-' + c.expects_routing);
     if (!el) continue;
-    el.querySelector('.n').textContent = '(' + (el.querySelectorAll('.card,.pair,.ruled').length + 1) + ')';
+    counts[c.expects_routing] = (counts[c.expects_routing] || 0) + 1;
+    el.querySelector('.n').textContent = '(' + counts[c.expects_routing] + ')';
     const media = c.kind === 'video'
       ? `<video controls preload="metadata" src="../fixtures/synthetic/${c.media}"></video>`
       : `<img src="../fixtures/synthetic/${c.media}" alt="${c.fixture_id}">`;
-    const prov = `<div class="prov">sha ${String(c.sha256).slice(0, 12)}… · ref frame:full</div>`;
+    const prov = `<div class="prov">sha ${String(c.sha256).slice(0, 12)}… · ref ${c.ref} (fixture-declared)</div>`;
     let html = '';
     if (c.expects_routing === 'CONFLICT') {
+      const m = c.mismatch || {};
       html = `<div class="pair"><div class="side"><h3>舊標籤 old claim</h3><div>${c.old_label}</div></div>`
         + `<div class="side"><h3>所見 observed</h3>${media}</div></div>`
-        + `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div><div>${c.note}</div>${prov}</div>`;
+        + `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div>`
+        + `<div class="mismatch">${m.field} · old claim: ${m.old} · observed: ${m.observed}</div>`
+        + `<div>${c.note}</div>${prov}</div>`;
     } else if (c.expects_routing === 'UNKNOWN') {
       html = `<div class="card"><div class="id">${c.fixture_id} · ${c.kind}</div>${media}<div>${c.note}</div>${prov}</div>`
         + `<div class="ruled"><span class="reserved">reserved for human judgment</span></div>`
