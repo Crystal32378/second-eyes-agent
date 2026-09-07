@@ -1,7 +1,9 @@
 # Demo contrast rule (from review — mandatory for video)
 
-UNKNOWN and CONFLICT look identical to "broken" on screen. Every such case
-in the demo MUST be shown side-by-side:
+Four states on screen: 自動歸檔 (CLEAR) / 新發現待驗 (NEW) / 問人
+(CONFLICT + UNKNOWN). Tagline unchanged. UNKNOWN and CONFLICT look
+identical to "broken" on screen. Every such case in the demo MUST be
+shown side-by-side:
 
 - UNKNOWN: left = what a generic auto-tagger would assert
   (e.g. `beige, product shot` — ILLUSTRATIVE failure mode, not a measured
