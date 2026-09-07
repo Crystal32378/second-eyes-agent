@@ -13,3 +13,16 @@ in the demo MUST be shown side-by-side:
 Synthetic fixtures prove plumbing only (loop runs, routing branches,
 logging complete). The only citable accuracy evidence is the Batch A 60
 blind run — that is the number allowed in the demo.
+
+## Evaluation claim rule: NO accuracy claims
+
+`observations.jsonl` is a single-model record (96/132 without cross-check,
+at least one description known to mismatch its asset). Any number computed
+against it is "agreement with Mini", not accuracy —拆得動, so we never
+put it in a public submission as accuracy.
+
+Report instead (needs only run logs, no answer key):
+  60 筆:自動歸檔 N、送人判 M、證據不足退回 K。
+  全程沒有任何一句斷言是它拿不出證據的。
+That IS the differentiator. A Crystal spot-checked subset is an optional
+bonus, never the foundation of the claim.

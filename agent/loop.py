@@ -19,6 +19,8 @@ both of which are BLOCKED until the Bedrock daily token quota recovers.
 from dataclasses import dataclass
 from typing import Literal
 
+from runtime.vocab import FIELDS, normalize
+
 Decision = Literal["CLEAR", "CONFLICT", "UNKNOWN"]
 
 MODEL_BLOCKED_REASON = (
@@ -43,15 +45,30 @@ def decide_placeholder() -> str:
 def route(evidence: dict) -> Decision:
     """Pure rule function — no model call. The ONLY decider of sufficiency.
 
-    evidence: {"items": [...], "conflicts": [...]}
-      - no items               -> UNKNOWN
-      - any conflicts          -> CONFLICT
-      - items, no conflicts    -> CLEAR
+    Closed-vocab comparison (deterministic program, never model judgment):
+
+      observed: {"colour": token|None, "item": token|None, "shot": token|None}
+      old:      same shape (parsed old label; prose/"很有故事感" -> all None)
+
+    Rules (exactly THREE states; degenerate inputs fold into UNKNOWN):
+      - observed has nothing in-vocab            -> UNKNOWN
+      - old has nothing in-vocab                 -> UNKNOWN (nothing to verify)
+      - same field, both in-vocab, unequal       -> CONFLICT
+      - >=1 comparable field, all equal          -> CLEAR
+
+    Examples:
+      old colour=red vs observed colour=beige    -> CONFLICT
+      old "很有故事感" vs observed colour=beige  -> UNKNOWN (non-comparable)
     """
-    items = evidence.get("items") or []
-    conflicts = evidence.get("conflicts") or []
-    if not items:
+    observed = evidence.get("observed") or {}
+    old = evidence.get("old") or {}
+    obs = {f: normalize(f, observed.get(f)) for f in FIELDS}
+    prev = {f: normalize(f, old.get(f)) for f in FIELDS}
+    if not any(obs.values()):
         return "UNKNOWN"
-    if conflicts:
-        return "CONFLICT"
+    if not any(prev.values()):
+        return "UNKNOWN"
+    for f in FIELDS:
+        if obs[f] is not None and prev[f] is not None and obs[f] != prev[f]:
+            return "CONFLICT"
     return "CLEAR"
