@@ -42,7 +42,7 @@ schemas, observations, or outputs are claimed as hackathon-new:
   empty; a pure rule function decides CLEAR / CONFLICT / UNKNOWN / NEW on
   frozen closed vocabularies (see runtime/vocab.py freeze note). The model
   only describes what it sees and NEVER decides routing — its selections
-  require a verifiable evidence_ref (frame timestamp, crop, or tool-result
+  require an attached evidence_ref (frame timestamp, crop, or tool-result
   ID) or they are discarded, and every one is logged with its ref for
   human audit. No old label -> NEW (recorded unverified, quiet), never
   an excuse to bother a human over an unlabelled file.

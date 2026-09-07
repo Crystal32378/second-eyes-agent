@@ -6,7 +6,7 @@ Locked loop (5 steps):
 Decisions are STRUCTURAL, not prompt-based: tools return evidence or empty,
 and a pure rule function routes CLEAR / CONFLICT / UNKNOWN / NEW on frozen
 closed vocabularies. The model only describes what it sees and never decides
-routing — its selections require a verifiable evidence_ref or are discarded,
+routing — its selections require an attached evidence_ref or are discarded,
 and every one is logged with its ref for human audit:
 
   nothing valid observed               -> UNKNOWN (ask human)
@@ -46,7 +46,7 @@ def decide_placeholder() -> str:
 
 
 def _observed(field: str, raw) -> str | None:
-    """Observed selections MUST carry a verifiable evidence_ref
+    """Observed selections MUST carry an attached evidence_ref
     (frame timestamp, crop, or tool-result ID). A legal token WITHOUT
     a ref is discarded — closed vocab alone cannot prove the token came
     from image evidence, so ref-less selections never route anything."""
