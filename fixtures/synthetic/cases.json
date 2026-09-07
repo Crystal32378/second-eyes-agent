@@ -44,6 +44,15 @@
    "old_label": "none",
    "media": "media/SYN-UNKNOWN-02.mp4",
    "sha256": "04b99da412341745d130de8f6a454cd0e24b8eac0f78bf0a0a09f04161cd416f"
+  },
+  {
+   "expects_routing": "NEW",
+   "fixture_id": "SYN-NEW-01",
+   "kind": "image",
+   "note": "Staged new: observable beige shape, no old label. Expect NEW, filed quiet, no human ping.",
+   "old_label": "none",
+   "media": "media/SYN-NEW-01.png",
+   "sha256": "342270ca3ebd1ee0ddca341be1689313e6b03b276b5522e731d656da571414aa"
   }
  ]
 }
