@@ -42,33 +42,56 @@ def decide_placeholder() -> str:
     raise RuntimeError(f"Model-gated: {MODEL_BLOCKED_REASON}")
 
 
+def _observed(field: str, raw) -> str | None:
+    """Observed selections MUST carry a verifiable evidence_ref
+    (frame timestamp, crop, or tool-result ID). A legal token WITHOUT
+    a ref is discarded — closed vocab alone cannot prove the token came
+    from image evidence, so ref-less selections never route anything."""
+    if isinstance(raw, dict):
+        value, ref = raw.get("value"), raw.get("ref")
+    else:
+        value, ref = raw, None
+    tok = normalize(field, value)
+    if tok is None or not ref:
+        return None
+    return tok
+
+
 def route(evidence: dict) -> Decision:
     """Pure rule function — no model call. The ONLY decider of sufficiency.
 
-    Closed-vocab comparison (deterministic program, never model judgment):
+    Closed-vocab comparison (deterministic program, never model judgment).
+    The model only supplies observations WITH evidence_refs; every one is
+    logged with its ref for human audit. The model NEVER decides routing.
 
-      observed: {"colour": token|None, "item": token|None, "shot": token|None}
-      old:      same shape (parsed old label; prose/"很有故事感" -> all None)
+      observed: {"colour": {"value": token, "ref": ref}|None, ...}
+      old:      {"colour": token|None, ...} (parsed old label;
+                prose/"很有故事感" -> all None)
 
-    Rules (exactly THREE states; degenerate inputs fold into UNKNOWN):
-      - observed has nothing in-vocab            -> UNKNOWN
-      - old has nothing in-vocab                 -> UNKNOWN (nothing to verify)
-      - same field, both in-vocab, unequal       -> CONFLICT
-      - >=1 comparable field, all equal          -> CLEAR
+    Order (exactly THREE states; degenerate inputs fold into UNKNOWN):
+      - no valid observation (in-vocab + ref)  -> UNKNOWN
+      - no valid old value                     -> UNKNOWN
+      - no common comparable field             -> UNKNOWN
+      - any common field unequal               -> CONFLICT
+      - all common fields equal                -> CLEAR
 
     Examples:
-      old colour=red vs observed colour=beige    -> CONFLICT
-      old "很有故事感" vs observed colour=beige  -> UNKNOWN (non-comparable)
+      old colour=red vs observed colour=beige  -> CONFLICT
+      old "很有故事感" vs observed colour=beige -> UNKNOWN (non-comparable)
+      old colour=red vs observed item=dress    -> UNKNOWN (no common field)
     """
     observed = evidence.get("observed") or {}
     old = evidence.get("old") or {}
-    obs = {f: normalize(f, observed.get(f)) for f in FIELDS}
+    obs = {f: _observed(f, observed.get(f)) for f in FIELDS}
     prev = {f: normalize(f, old.get(f)) for f in FIELDS}
     if not any(obs.values()):
         return "UNKNOWN"
     if not any(prev.values()):
         return "UNKNOWN"
-    for f in FIELDS:
-        if obs[f] is not None and prev[f] is not None and obs[f] != prev[f]:
+    common = [f for f in FIELDS if obs[f] is not None and prev[f] is not None]
+    if not common:
+        return "UNKNOWN"
+    for f in common:
+        if obs[f] != prev[f]:
             return "CONFLICT"
     return "CLEAR"

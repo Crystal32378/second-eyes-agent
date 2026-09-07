@@ -39,9 +39,11 @@ schemas, observations, or outputs are claimed as hackathon-new:
   multimodal fixtures (3 images + 2 videos, clearly-synthetic, SHA-pinned in
   `cases.json`) + tool interfaces + logging + reader hash gate. No Bedrock calls.
 - Routing contract (structural, not prompt-based): tools return evidence or
-  empty; a pure rule function decides CLEAR / CONFLICT / UNKNOWN. The model
-  only describes what it sees and NEVER decides sufficiency — it has no
-  interface to assert what it was not given.
+  empty; a pure rule function decides CLEAR / CONFLICT / UNKNOWN on closed
+  vocabularies. The model only describes what it sees and NEVER decides
+  routing — its selections require a verifiable evidence_ref (frame
+  timestamp, crop, or tool-result ID) or they are discarded, and every one
+  is logged with its ref for human audit.
 - Model runs BLOCKED on Bedrock daily token quota (ThrottlingException).
   No mock results are presented as Bedrock results.
 - Protocol: synthetic 3–5 cases first → lock prompt/tools → Batch A 60 blind run.
