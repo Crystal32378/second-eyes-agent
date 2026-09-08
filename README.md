@@ -17,6 +17,16 @@ State relabel (same four states, no code change):
   CONFLICT  兩份說法打架      → 先別發
   UNKNOWN   缺清關依據        → 誰能解、要多久，寫在這裡
 
+User-facing baskets (presentation only — evidence states stay internal):
+  Ready candidate （未觸發已知風險，優先排）      ← CLEAR
+  Needs review    （可能可用，缺一項確認）        ← NEW（缺首次確認）, UNKNOWN（缺依據+誰能解）
+  Hold            （已有明確問題，不應直接發布）  ← CONFLICT
+
+Honest scope: the four risk-tree steps (人物→清楚產品→畫面可用→發布條件)
+are NOT all implemented — see docs/publish-risk-tree.md for what is wired
+vs v-next. "Closest to publishable with no known risk triggered" is the
+claim; "no-risk" never is.
+
 ## Pre-existing work — DISCLOSED (not claimed as new)
 
 The following existed before the hackathon Submission Period and are used
