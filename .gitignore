@@ -1,6 +1,7 @@
 # local hygiene — never commit credentials orevaluator data
 __pycache__/
 *.pyc
+.venv/
 .DS_Store
 .aws/
 *.pem

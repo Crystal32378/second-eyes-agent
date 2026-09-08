@@ -50,7 +50,9 @@ schemas, observations, or outputs are claimed as hackathon-new:
   ID) or they are discarded, and every one is logged with its ref for
   human audit. No old label -> NEW (recorded unverified, quiet), never
   an excuse to bother a human over an unlabelled file.
-- Model runs BLOCKED on Bedrock daily token quota (ThrottlingException).
-  No mock results are presented as Bedrock results.
+- Nova model runs remain BLOCKED on Bedrock daily token quota
+  (ThrottlingException). No mock or Gemini result is presented as Nova
+  evidence. A separate Strands + Gemini provider adapter is available for a
+  quota-independent connectivity path; see `docs/gemini_status.md`.
 - Protocol: synthetic 3–5 cases first → lock prompt/tools → Batch A 60 blind run.
   Batch A only. Personnel out of scope.
