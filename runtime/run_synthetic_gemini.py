@@ -67,13 +67,50 @@ def parse_selection(raw: str) -> dict:
     return out
 
 
+def usage_snapshot(result) -> dict:
+    """Token usage from a Strands AgentResult (best-effort, provider-shaped).
+
+    Records accumulated + per-cycle usage dicts verbatim so thinking tokens,
+    if reported by the provider, show up instead of being inferred.
+    """
+    snap = {"accumulated": None, "cycles": [], "stop_reason": None}
+    try:
+        usage = result.metrics.accumulated_usage
+        snap["accumulated"] = {"inputTokens": usage.get("inputTokens"),
+                               "outputTokens": usage.get("outputTokens"),
+                               "totalTokens": usage.get("totalTokens")}
+    except Exception:
+        pass
+    try:
+        for inv in result.metrics.agent_invocations:
+            for cyc in inv.cycles:
+                snap["cycles"].append(dict(cyc.usage))
+    except Exception:
+        pass
+    try:
+        snap["stop_reason"] = str(result.stop_reason)
+    except Exception:
+        pass
+    return snap
+
+
 def main() -> int:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--only", default=None,
+                        help="run a single fixture id only (diagnostic)")
+    args = parser.parse_args()
+
     model_id = os.getenv("SECOND_EYES_GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_name = f"synthetic_gemini_{stamp}.jsonl"
     raw_name = f"synthetic_gemini_{stamp}.raw.jsonl"
 
     cases = json.loads(FIXTURES.read_text())["cases"]
+    if args.only:
+        cases = [c for c in cases if c["fixture_id"] == args.only]
+        if not cases:
+            raise RuntimeError(f"FIXTURE_ISSUE: unknown id {args.only}")
     agent = Agent(model=build_gemini_model(), system_prompt=OBSERVE_PROMPT,
                   tools=[], callback_handler=None)
 
@@ -91,6 +128,7 @@ def main() -> int:
             block = {"video": {"format": "mp4", "source": {"bytes": media_bytes}}}
         result = agent([block, {"text": "Observe and reply with strict JSON."}])
         raw = str(result).strip()
+        usage = usage_snapshot(result)
         selections = parse_selection(raw)  # raises PROMPT_ISSUE -> STOP
         ref = case["ref"]
         observed = {f: ({"value": selections[f], "ref": ref}
@@ -112,11 +150,13 @@ def main() -> int:
                          "selections": selections},
             "expects_routing": case["expects_routing"],
             "match": decision == case["expects_routing"],
+            "usage": usage,
         }
         append_record(record, filename=out_name)
         with open(ROOT / "outputs" / raw_name, "a") as f:
             f.write(json.dumps({"fixture": case["fixture_id"], "model": model_id,
-                                "prompt_version": PROMPT_VERSION, "raw": raw}) + "\n")
+                                "prompt_version": PROMPT_VERSION, "raw": raw,
+                                "usage": usage}) + "\n")
         results.append((case["fixture_id"], decision, case["expects_routing"],
                         decision == case["expects_routing"]))
         print(f"{case['fixture_id']}: routed={decision} "
