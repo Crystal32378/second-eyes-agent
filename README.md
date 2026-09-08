@@ -6,10 +6,20 @@ Professional track — Agents for Humans Hackathon.
 > Most things stay filed. Questions come to you.
 
 Product framing (copy layer only — no system change): Second Eyes is a
-**customs-clearance tool, not an organizing tool**. It tells you which
-photos are cleared, which are blocked, and whose hands hold the keys —
-and on the cell that could get you sued, it never guesses. Currently
-demonstrated with synthetic fixtures; rights sources are not yet connected.
+**shortlist tool, not an organizing tool**. 600 張照片，四小時後要發稿——
+Second Eyes 依照發布 brief，交給你一份短名單；每張附上入選理由與
+待確認事項。**先給你短名單。** Most things stay filed. Questions come to you.
+
+Boundary: 沒有 brief，就沒有發布清關依據；照片只能標為待確認，
+不能稱為可立即發布。Second Eyes 只核對 brief，不替合約、授權或
+法律狀態背書 —— 「符合 brief 已知條件的 10–20 張候選」，不是
+「已清關」。
+
+Final interface (target — brief-driven runner is v-next, not yet built):
+- 短名單：值得人最後看一眼（人憑直覺挑最後三張，不做主圖排名）
+- 待確認：brief 沒有回答的問題
+- 其餘照片：留在原處，附上未入選原因
+- Coverage：brief 要求的場景哪些有、哪些缺
 
 State relabel (same four states, no code change):
   CLEAR     兩邊說法一致      → 可用 (no detected conflict — candidate, not legal clearance)
