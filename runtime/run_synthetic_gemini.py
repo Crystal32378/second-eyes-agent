@@ -111,11 +111,24 @@ def main() -> int:
         cases = [c for c in cases if c["fixture_id"] == args.only]
         if not cases:
             raise RuntimeError(f"FIXTURE_ISSUE: unknown id {args.only}")
-    agent = Agent(model=build_gemini_model(), system_prompt=OBSERVE_PROMPT,
-                  tools=[], callback_handler=None)
+    model = build_gemini_model()  # built once; a FRESH Agent per fixture below
 
     results = []
     for case in cases:
+        if case["kind"] == "video":
+            # Out of Gemini synthetic scope: Strands GeminiModel has no video
+            # block support. Logged, never attempted. No frame extraction.
+            with open(ROOT / "outputs" / raw_name, "a") as f:
+                f.write(json.dumps({"fixture": case["fixture_id"],
+                                    "status": "BLOCKED_UNSUPPORTED",
+                                    "reason": "video content blocks unsupported "
+                                              "by Strands GeminiModel"}) + "\n")
+            print(f"{case['fixture_id']}: BLOCKED_UNSUPPORTED (video, skipped)")
+            continue
+        # Fresh agent per fixture: no cross-fixture history contamination,
+        # stable per-call usage. Approved isolation fix, 2026-09-08.
+        agent = Agent(model=model, system_prompt=OBSERVE_PROMPT,
+                      tools=[], callback_handler=None)
         media_path = MEDIA_DIR / case["media"]
         digest = hashlib.sha256(media_path.read_bytes()).hexdigest()
         if digest.lower() != case["sha256"].lower():
