@@ -3,6 +3,19 @@
 Professional track — Agents for Humans Hackathon.
 
 > Second Eyes — 它先看一遍。沒證據不猜，有衝突才問你。
+> Most things stay filed. Questions come to you.
+
+Product framing (copy layer only — no system change): Second Eyes is a
+**customs-clearance tool, not an organizing tool**. It tells you which
+photos are cleared, which are blocked, and whose hands hold the keys —
+and on the cell that could get you sued, it never guesses. Currently
+demonstrated with synthetic fixtures; rights sources are not yet connected.
+
+State relabel (same four states, no code change):
+  CLEAR     兩邊說法一致      → 可用 (no detected conflict — candidate, not legal clearance)
+  NEW       沒人說過話        → 你自己判 (no prior claim to dispute)
+  CONFLICT  兩份說法打架      → 先別發
+  UNKNOWN   缺清關依據        → 誰能解、要多久，寫在這裡
 
 ## Pre-existing work — DISCLOSED (not claimed as new)
 
