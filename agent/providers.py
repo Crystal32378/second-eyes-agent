@@ -15,6 +15,16 @@ from strands.models.gemini import GeminiModel
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_VERTEX_LOCATION = "global"
 
+PROVIDER_PARAMS = {
+    "temperature": 0,
+    # Branch-1 fix (diagnosed 2026-09-08): gemini-2.5-flash thinking consumed
+    # the 256-token budget, truncating the JSON answer at 33 chars. Small
+    # NONZERO thinking_budget per review (zero risks FALSE_CONFIDENT);
+    # 1024 headroom fits thinking + ~40-token JSON. Prompt text untouched.
+    "max_output_tokens": 1024,
+    "thinking_config": {"thinking_budget": 128},
+}
+
 SYSTEM_PROMPT = """You are the observation provider for Second Eyes.
 Describe only evidence present in the supplied input. Never choose a routing
 state and never fill missing evidence. For this connectivity check, reply with
@@ -33,7 +43,7 @@ def build_gemini_model() -> GeminiModel:
         return GeminiModel(
             client_args={"api_key": api_key},
             model_id=model_id,
-            params={"temperature": 0, "max_output_tokens": 256},
+            params=dict(PROVIDER_PARAMS),
         )
 
     project = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -47,7 +57,7 @@ def build_gemini_model() -> GeminiModel:
     return GeminiModel(
         client=client,
         model_id=model_id,
-        params={"temperature": 0, "max_output_tokens": 256},
+        params=dict(PROVIDER_PARAMS),
     )
 
 

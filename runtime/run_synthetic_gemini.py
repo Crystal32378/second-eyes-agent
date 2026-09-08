@@ -126,7 +126,29 @@ def main() -> int:
             block = {"image": {"format": fmt, "source": {"bytes": media_bytes}}}
         else:
             block = {"video": {"format": "mp4", "source": {"bytes": media_bytes}}}
-        result = agent([block, {"text": "Observe and reply with strict JSON."}])
+        try:
+            result = agent([block, {"text": "Observe and reply with strict JSON."}])
+        except Exception as e:
+            # Diagnostic only: surface the partial message left in history,
+            # then stop. No retries, no prompt/vocab changes.
+            partial = ""
+            try:
+                last = agent.messages[-1] if agent.messages else {}
+                for blk in (last.get("content") or []):
+                    if isinstance(blk, dict) and "text" in blk:
+                        partial += blk["text"]
+            except Exception:
+                pass
+            diag = {"fixture": case["fixture_id"], "model": model_id,
+                    "prompt_version": PROMPT_VERSION,
+                    "error": type(e).__name__, "error_text": str(e)[:300],
+                    "partial_chars": len(partial), "partial_head": partial[:800]}
+            with open(ROOT / "outputs" / raw_name, "a") as f:
+                f.write(json.dumps(diag) + "\n")
+            print(f"DIAG saved to outputs/{raw_name}: "
+                  f"{diag['error']} partial_chars={len(partial)}")
+            print(f"PARTIAL_HEAD: {partial[:800]!r}")
+            raise
         raw = str(result).strip()
         usage = usage_snapshot(result)
         selections = parse_selection(raw)  # raises PROMPT_ISSUE -> STOP
