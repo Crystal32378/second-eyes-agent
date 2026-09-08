@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import Mock, patch
 
-from agent.providers import build_gemini_model
+from agent.providers import PROVIDER_PARAMS, build_gemini_model
 
 
 class GeminiProviderTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class GeminiProviderTests(unittest.TestCase):
         model.assert_called_once_with(
             client_args={"api_key": "test-only"},
             model_id="gemini-test",
-            params={"temperature": 0, "max_output_tokens": 256},
+            params=PROVIDER_PARAMS,
         )
 
     @patch("agent.providers.GeminiModel")
@@ -35,7 +35,7 @@ class GeminiProviderTests(unittest.TestCase):
         model.assert_called_once_with(
             client=fake_client,
             model_id="gemini-2.5-flash",
-            params={"temperature": 0, "max_output_tokens": 256},
+            params=PROVIDER_PARAMS,
         )
 
     def test_credentials_are_required(self):
