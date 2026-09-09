@@ -38,9 +38,12 @@ EXCLUDE (4):
 2. REEL-044 slot (wearing context) → `IG Reel/華麗年代/810662E2-3A19-428F-AB8A-C5909FC4B928.jpg`
    Crystal-approved. Vertical on-body, eyes covered. (Approval = supplied
    decision; do NOT describe as identity-verified/anonymous/cleared.)
-3. REEL-035 slot (vertical motion source) → `IG Reel/華麗年代/華麗年代灰色.mp4`
-   (poster @1.0s verified: NUDE box + hand, no face). 粉色/黑色 poster frames
-   show faces → rejected. Slot re-labels to packaging-in-motion at execution.
+3. REEL-035 slot (vertical motion source) → `IG Reel/華麗年代/華麗年代黑色.mp4`
+   (poster @1.0s verified: NUDE box + hand, no face. CORRECTION 2026-09-09:
+   first draft named 灰色.mp4 from a misattributed hash filename; re-pull
+   per named file shows 灰色 @1.0s is a full face → rejected, 粉色 @1.0s is
+   a partial but recognizable face → rejected conservative. Slot re-labels
+   to packaging-in-motion at execution.)
 4. IG-223 slot (robe flatlay) → `IG/絲柔光璨長袍/627A5059-17.jpg`
    Blue robe hanging, no people, no third-party marks. (Siblings rejected:
    …065-18 has a face on a background TV screen; …074-19 has legible
