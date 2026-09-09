@@ -1,3 +1,10 @@
+# Public-demo replacement set — SUPERSEDED (executed as HEAD 472832b)
+
+SUPERSEDED NOTE 2026-09-09: direct inspection found one fully visible eye
+in REEL-032, so the borderline keep was rejected; the final approved
+replacement is BACK-5F20. Kept for audit trail only — see
+docs/demo-derivatives.md for the executed manifest.
+
 # Public-demo replacement set — PROPOSAL (NOT yet applied, for Fu review)
 
 Rule (Crystal, supplied project decision — not a model inference):

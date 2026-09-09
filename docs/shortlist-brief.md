@@ -1,6 +1,7 @@
 # Shortlist brief — input spec (v-next, NOT yet consumed by any runner)
 
-Positioning: 600 photos, four hours to deadline. Second Eyes delivers a
+Positioning: 400 photos (404 real source files scanned, presented as a
+400-photo demo scenario), four hours to deadline. Second Eyes delivers a
 shortlist per this brief, each candidate with reasons + pending items.
 Humans pick the final three by instinct; the machine never ranks heroes
 and never pretends taste.
