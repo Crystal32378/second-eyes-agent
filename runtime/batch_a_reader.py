@@ -14,8 +14,10 @@ import csv
 import hashlib
 import os
 
-MANIFEST = "/Users/crystalchang/Desktop/Hermes Lab/Minimax Lab/NUDE Agent Brand Library/00_observation/sample_manifest.csv"
-SOURCE_ROOT = "/Users/crystalchang/Desktop/Brand Image"
+# Corpus locations are private evaluation infrastructure and MUST NOT be
+# hardcoded: configure via environment. Defaults are inert placeholders.
+MANIFEST = os.getenv("SECOND_EYES_MANIFEST", "")
+SOURCE_ROOT = os.getenv("SECOND_EYES_SOURCE_ROOT", "")
 EXPECTED_MANIFEST_SHA256 = "653e987cbaf7fd6df3466b8dececdc95bdb872ab1f2b644cfafb68c0f96e8563"
 
 
@@ -36,7 +38,12 @@ def sha256_file(path: str) -> str:
 
 def gate_batch_a():
     """Verify manifest SHA + 60/60 source bytes. Returns list of gated items.
-    Raises on any mismatch. No semantic classification here."""
+    Raises on any mismatch. No semantic classification here.
+    Requires SECOND_EYES_MANIFEST and SECOND_EYES_SOURCE_ROOT."""
+    if not MANIFEST or not SOURCE_ROOT:
+        raise RuntimeError(
+            "Batch A corpus not configured: set SECOND_EYES_MANIFEST and "
+            "SECOND_EYES_SOURCE_ROOT (private evaluation infrastructure).")
     h = sha256_file(MANIFEST)
     if h.lower() != EXPECTED_MANIFEST_SHA256.lower():
         raise RuntimeError(f"manifest SHA mismatch: {h}")

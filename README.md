@@ -1,64 +1,101 @@
-# Second Eyes — second-eyes-agent (local working folder, not yet public)
+# Second Eyes — second-eyes-agent
 
-Professional track — Agents for Humans Hackathon.
+Professional track — Agents for Humans Hackathon (Strands Agents SDK).
 
-> Second Eyes — 它先看一遍。沒證據不猜，有衝突才問你。
+> Second Eyes hands you a shortlist first.
 > Most things stay filed. Questions come to you.
 
-Product framing (copy layer only — no system change): Second Eyes is a
-**shortlist tool, not an organizing tool**. 400 張照片（404 real source files
-scanned, presented as a 400-photo demo scenario），四小時後要發稿——
-Second Eyes 依照發布 brief，交給你一份短名單；每張附上入選理由與
-待確認事項。**先給你短名單。** Most things stay filed. Questions come to you.
+**Product (one line):** for a 400-photo publishing deadline, Second Eyes
+delivers a shortlist with a reason and pending items per photo — the human
+picks the final three by instinct. No hero ranking, no taste, no guessing.
 
-Boundary: 沒有 brief，就沒有發布清關依據；照片只能標為待確認，
-不能稱為可立即發布。Second Eyes 只核對 brief，不替合約、授權或
-法律狀態背書 —— 「符合 brief 已知條件的 10–20 張候選」，不是
-「已清關」。
+**Boundary (standing):** no brief = no clearance basis; every photo is
+"needs review" at best. Second Eyes checks ONLY what the brief states and
+endorses no contract, licence, or legal status. "Candidates matching the
+brief's known conditions" — never "cleared".
 
-Final interface (target — brief-driven runner is v-next, not yet built):
-- 短名單：值得人最後看一眼（人憑直覺挑最後三張，不做主圖排名）
-- 待確認：brief 沒有回答的問題
-- 其餘照片：留在原處，附上未入選原因
-- Coverage：brief 要求的場景哪些有、哪些缺
+**Architecture:** see [docs/architecture.md](docs/architecture.md) — it marks
+exactly what is implemented vs presentation-only. Anything the diagram shows
+dashed (brief parsing, live 400-run, clustering, coverage computation,
+video adapter, Batch A blind run) is spec/mock, not runtime.
 
-State relabel (same four states, no code change):
-  CLEAR     兩邊說法一致      → 可用 (no detected conflict — candidate, not legal clearance)
-  NEW       沒人說過話        → 你自己判 (no prior claim to dispute)
-  CONFLICT  兩份說法打架      → 先別發
-  UNKNOWN   缺清關依據        → 誰能解、要多久，寫在這裡
+## Evidence distinction (400-photo demo)
 
-User-facing baskets (presentation only — evidence states stay internal):
-  Ready candidate （未觸發已知風險，優先排）      ← CLEAR
-  Needs review    （可能可用，缺一項確認）        ← NEW（缺首次確認）, UNKNOWN（缺依據+誰能解）
-  Hold            （已有明確問題，不應直接發布）  ← CONFLICT
+- **404 real source files were scanned** (local IG / IG Reel corpus) and are
+  presented as a **400-photo publishing scenario**: SHORTLIST 18, NEEDS
+  REVIEW 7, REMAINING 375 (300 brief mismatch + 60 near-duplicates + 15
+  technical). Counts and placements in the static UI are illustrative mock
+  content with real reference images — not model outputs.
+- The 12 in-repo demo derivatives (`ui/workroom/assets/`) are compressed,
+  metadata-stripped crops made for this demo from brand-supplied situational
+  photographs (social-media usage rights confirmed by the asset owner). Not
+  product assets, not archive originals, not representative archive contents.
+  No release or clearance assessment. No clearly identifiable full face.
+- The separate 60-asset Batch A evaluation corpus (54 images + 6 videos,
+  non-Personnel) is **private evaluation infrastructure**: membership is
+  hash-gated, bytes stay read-only off-repo, and the blind run has NOT been
+  executed. Nothing in this repo claims Batch A results.
 
-Honest scope: the four risk-tree steps (人物→清楚產品→畫面可用→發布條件)
-are NOT all implemented — see docs/publish-risk-tree.md for what is wired
-vs v-next. "Closest to publishable with no known risk triggered" is the
-claim; "no-risk" never is.
+## Implemented (this repo, tested)
+
+- Strands agent loop + pure deterministic `route()` → CLEAR / CONFLICT /
+  UNKNOWN / NEW (15/15 unit tests; routing is structural, never prompt-based)
+- Strands + Gemini provider adapter (Vertex AI, image only; video is
+  structurally unsupported on this path)
+- Fresh-agent-per-fixture isolation; attached `evidence_ref` required
+  (ref-less selections are discarded); validated JSON run records with
+  token usage
+- Frozen closed vocabularies (colour/item/shot, CJK substring scan)
+- 6 SHA-pinned synthetic fixtures (prove plumbing only — never accuracy)
+- Static Publishing Workroom UI (two states) + synthetic 4-state viewer
+
+## Presentation-only (not wired)
+
+Brief parsing, live shortlist run, near-duplicate clustering, coverage
+computation, automatic zone population, final-three handoff, video adapter,
+Reel Crew handoff. See `docs/shortlist-brief.md` (input spec, no runner).
+
+## Install & test
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m unittest discover -s tests -v   # 15/15 expected
+```
+
+## Open the static Workroom (no server needed for files, but images load
+best over localhost)
+
+```bash
+cd second-eyes-agent && python3 -m http.server 8123
+# http://localhost:8123/ui/workroom/brief-established.html
+# http://localhost:8123/ui/workroom/brief-missing.html
+# http://localhost:8123/ui/   (synthetic 4-state viewer)
+```
+
+## Run the synthetic path (Gemini via Vertex ADC; image fixtures only)
+
+```bash
+GOOGLE_CLOUD_PROJECT=<project> .venv/bin/python runtime/check_gemini.py --invoke
+GOOGLE_CLOUD_PROJECT=<project> .venv/bin/python runtime/run_synthetic_gemini.py --only SYN-CLEAR-01
+```
+
+Video fixtures log `BLOCKED_UNSUPPORTED` (Strands GeminiModel has no video
+blocks). Never present Gemini results as Nova evidence. Nova remains
+quota-blocked; see `docs/quota_status.md`.
 
 ## Pre-existing work — DISCLOSED (not claimed as new)
 
 The following existed before the hackathon Submission Period and are used
-ONLY as a read-only evaluation corpus / reference. None of their code,
-schemas, observations, or outputs are claimed as hackathon-new:
+ONLY as read-only evaluation corpus / reference:
 
-- Batch A selection: 60 assets (54 images + 6 videos), non-Personnel only,
-  membership authority `Minimax Lab/NUDE Agent Brand Library/00_observation/sample_manifest.csv`
-  (`sample_order` 1–60), SHA-256 `653e987c…0f96e8563`.
-- Source bytes: `Desktop/Brand Image/<rel_path>` (read-only, hash-gated per row).
-- Selection/seed/method provenance: `sample_manifest_seed_and_method.md`.
-- Existing semantic observations: `00_observation/observations.jsonl`
-  (evaluator-only, NEVER fed to runtime before blind run).
-- Technical inventory: `01_inventory/inventory.csv` + summaries / rebuild docs
-  (evaluator-only reference).
-- Stage 3 canonical identity registry + crosswalk (`registry_v1/`,
-  `source_instances_v1.jsonl` + `source_asset_crosswalk_v1.jsonl`)
-  — canonical pointers only (`canonical_asset_id`, `source_instance_id`,
-  `source_relative_path`, `sha256`, `byte_size`, `source_root_id`).
-  Legacy `NUDE-xxxxx` sample IDs are NOT canonical IDs.
-- Any Brand Library schema / taxonomy / resolver / UI / code / policy / logs.
+- Batch A selection: 60 assets (54 images + 6 videos), non-Personnel only
+  (`sample_order` 1–60 of the observation sample manifest). Bytes and
+  manifest live off-repo; configure via `SECOND_EYES_MANIFEST` and
+  `SECOND_EYES_SOURCE_ROOT` (never committed).
+- Existing semantic observations, technical inventory, Stage 3 canonical
+  identity registry/crosswalk, and any Brand Library schema / taxonomy /
+  resolver / UI / code / policy / logs (evaluator-only reference).
 - Hero image desk items are desaturated, aged crops derived from situational
   photographs gifted by the brand's photographer with social-media usage
   rights. Not product assets, not archive originals, and not presented as
@@ -66,27 +103,17 @@ schemas, observations, or outputs are claimed as hackathon-new:
 
 ## Hackathon-new (only these are claimed)
 
-- This repo skeleton, Strands agent loop, 4 tools, Batch A hash-gated reader,
-  decision/review flow, local UI outputs, run logs, fresh outputs,
-  architecture, demo + submission materials.
-- No Brand Library code is copied into this project.
+This repo's agent loop, tools, providers, runners, frozen vocabularies,
+synthetic fixtures, logging, static UIs, docs, and submission materials.
+No Brand Library code is copied into this project.
 
 ## Status
 
-- Phase 1 (no model quota needed): skeleton + disclosure + synthetic
-  multimodal fixtures (3 images + 2 videos, clearly-synthetic, SHA-pinned in
-  `cases.json`) + tool interfaces + logging + reader hash gate. No Bedrock calls.
-- Routing contract (structural, not prompt-based): tools return evidence or
-  empty; a pure rule function decides CLEAR / CONFLICT / UNKNOWN / NEW on
-  frozen closed vocabularies (see runtime/vocab.py freeze note). The model
-  only describes what it sees and NEVER decides routing — its selections
-  require an attached evidence_ref (frame timestamp, crop, or tool-result
-  ID) or they are discarded, and every one is logged with its ref for
-  human audit. No old label -> NEW (recorded unverified, quiet), never
-  an excuse to bother a human over an unlabelled file.
-- Nova model runs remain BLOCKED on Bedrock daily token quota
-  (ThrottlingException). No mock or Gemini result is presented as Nova
-  evidence. A separate Strands + Gemini provider adapter is available for a
-  quota-independent connectivity path; see `docs/gemini_status.md`.
-- Protocol: synthetic 3–5 cases first → lock prompt/tools → Batch A 60 blind run.
-  Batch A only. Personnel out of scope.
+- Static public gate: `ui/workroom/` ships real compressed derivatives, zero
+  symlinks, English UI, reconciled 400 counts.
+- Model runs: synthetic plumbing proven on image fixtures; Batch A 60 blind
+  run pending; no accuracy claimed anywhere.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
