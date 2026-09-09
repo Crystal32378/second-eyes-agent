@@ -4,9 +4,9 @@ Method (all 4 new files): EXIF-transpose → RGB → proportional resize
 (longest edge 1400px; video poster height 900px to match house treatment) →
 JPEG q82 → EXIF verified absent. Originals untouched.
 
-8 keeps (copied bytes from Kimi Studio derivatives, pre-existing):
-IG-262, IG-277, IG-072, IG-256, IG-245, REEL-045, REEL-050, REEL-032
-(REEL-032 borderline: eyes out of frame — Fu holds the keep/replace call.)
+7 keeps (copied bytes from Kimi Studio derivatives, pre-existing):
+IG-262, IG-277, IG-072, IG-256, IG-245, REEL-045, REEL-050
++ BACK-5F20 (FINAL SELECTION replacement for borderline REEL-032: close purple back view, strap + closure construction, no face; 1058x1400, same method).
 
 4 swaps (this pass):
 | slot | derivative | source original | timestamp/size | reason |

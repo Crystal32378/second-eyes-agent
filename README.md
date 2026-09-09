@@ -6,7 +6,8 @@ Professional track — Agents for Humans Hackathon.
 > Most things stay filed. Questions come to you.
 
 Product framing (copy layer only — no system change): Second Eyes is a
-**shortlist tool, not an organizing tool**. 600 張照片，四小時後要發稿——
+**shortlist tool, not an organizing tool**. 400 張照片（404 real source files
+scanned, presented as a 400-photo demo scenario），四小時後要發稿——
 Second Eyes 依照發布 brief，交給你一份短名單；每張附上入選理由與
 待確認事項。**先給你短名單。** Most things stay filed. Questions come to you.
 
