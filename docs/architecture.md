@@ -8,8 +8,6 @@
 flowchart TB
     subgraph INPUT["Inputs (read-only)"]
         SYN["Synthetic fixtures<br/>fixtures/synthetic (SHA-pinned)"]
-        MAN["Batch A manifest<br/>60 rows, hash-gated"]
-        BYTES["Batch A source bytes<br/>read-only, never modified"]
     end
 
     subgraph AGENT["Strands agent layer (implemented)"]
@@ -42,12 +40,9 @@ flowchart TB
         FINAL3["final-three handoff"]
         VID["video adapter"]
         REEL["Reel Crew handoff"]
-        BLIND["Batch A 60 blind run (not yet executed)"]
     end
 
     SYN --> RUNNER
-    MAN --> RUNNER
-    BYTES -.->|hash-gate verified,<br/>no blind run yet| BLIND
     RUNNER --> PROV
     PROV --> LOOP
     VOCAB --> LOOP
@@ -68,7 +63,6 @@ flowchart TB
     style FINAL3 fill:#fff,stroke-dasharray:5 5
     style VID fill:#fff,stroke-dasharray:5 5
     style REEL fill:#fff,stroke-dasharray:5 5
-    style BLIND fill:#fff,stroke-dasharray:5 5
 ```
 
 ## What's real vs what's mock
@@ -82,7 +76,7 @@ flowchart TB
 | Frozen vocabularies | Implemented + frozen pre-run | `runtime/vocab.py` freeze note |
 | Synthetic fixtures (6, SHA-pinned) | Implemented | `fixtures/synthetic/` |
 | Publishing Workroom static pages | Implemented (mock placements) | `ui/workroom/`, `ui/index.html` |
-| Brief parsing / live 400-run / clustering / coverage / auto-population / final-three / video adapter / Reel Crew handoff / Batch A blind run | Presentation-only | `docs/shortlist-brief.md` (spec, no runner) |
+| Brief parsing / live 400-run / clustering / coverage / auto-population / final-three / video adapter / Reel Crew handoff | Presentation-only | `docs/shortlist-brief.md` (spec, no runner) |
 
 ## Key contracts
 

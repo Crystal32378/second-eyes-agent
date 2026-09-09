@@ -17,7 +17,7 @@ brief's known conditions" — never "cleared".
 **Architecture:** see [docs/architecture.md](docs/architecture.md) — it marks
 exactly what is implemented vs presentation-only. Anything the diagram shows
 dashed (brief parsing, live 400-run, clustering, coverage computation,
-video adapter, Batch A blind run) is spec/mock, not runtime.
+video adapter) is spec/mock, not runtime.
 
 ## Evidence distinction (400-photo demo)
 
@@ -26,15 +26,11 @@ video adapter, Batch A blind run) is spec/mock, not runtime.
   REVIEW 7, REMAINING 375 (300 brief mismatch + 60 near-duplicates + 15
   technical). Counts and placements in the static UI are illustrative mock
   content with real reference images — not model outputs.
-- The 12 in-repo demo derivatives (`ui/workroom/assets/`) are compressed,
-  metadata-stripped crops made for this demo from brand-supplied situational
-  photographs (social-media usage rights confirmed by the asset owner). Not
-  product assets, not archive originals, not representative archive contents.
-  No release or clearance assessment. No clearly identifiable full face.
-- The separate 60-asset Batch A evaluation corpus (54 images + 6 videos,
-  non-Personnel) is **private evaluation infrastructure**: membership is
-  hash-gated, bytes stay read-only off-repo, and the blind run has NOT been
-  executed. Nothing in this repo claims Batch A results.
+- The 12 in-repo demo derivatives (`ui/workroom/assets/`) are resized,
+  metadata-stripped presentation files selected from brand-supplied materials.
+  Usage rights for the included model photography were confirmed by the brand
+  owner. Original full-resolution files are not included. The system itself
+  performs no rights or clearance assessment.
 
 ## Implemented (this repo, tested)
 
@@ -86,20 +82,8 @@ quota-blocked; see `docs/quota_status.md`.
 
 ## Pre-existing work — DISCLOSED (not claimed as new)
 
-The following existed before the hackathon Submission Period and are used
-ONLY as read-only evaluation corpus / reference:
-
-- Batch A selection: 60 assets (54 images + 6 videos), non-Personnel only
-  (`sample_order` 1–60 of the observation sample manifest). Bytes and
-  manifest live off-repo; configure via `SECOND_EYES_MANIFEST` and
-  `SECOND_EYES_SOURCE_ROOT` (never committed).
-- Existing semantic observations, technical inventory, Stage 3 canonical
-  identity registry/crosswalk, and any Brand Library schema / taxonomy /
-  resolver / UI / code / policy / logs (evaluator-only reference).
-- Hero image desk items are desaturated, aged crops derived from situational
-  photographs gifted by the brand's photographer with social-media usage
-  rights. Not product assets, not archive originals, and not presented as
-  representative archive contents.
+A separate pre-existing evaluation corpus remains off-repo for provenance.
+It was not used or run for this demo, and no results from it are claimed.
 
 ## Hackathon-new (only these are claimed)
 
@@ -111,8 +95,8 @@ No Brand Library code is copied into this project.
 
 - Static public gate: `ui/workroom/` ships real compressed derivatives, zero
   symlinks, English UI, reconciled 400 counts.
-- Model runs: synthetic plumbing proven on image fixtures; Batch A 60 blind
-  run pending; no accuracy claimed anywhere.
+- Model runs: synthetic plumbing proven on image fixtures; no accuracy
+  claimed anywhere.
 
 ## License
 
