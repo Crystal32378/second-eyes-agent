@@ -34,11 +34,23 @@ class TestLocalMVP(unittest.TestCase):
 
     def test_stubbed_flag_precise(self):
         by_key = {i["asset_key"]: i for i in self.results["items"]}
-        # ROBE decided on stubbed scene/channel/sku -> flagged.
-        self.assertTrue(by_key["ROBE-5059"]["stubbed"])
+        # ROBE publishing facts are owner-verified, so its Shortlist
+        # decision no longer depends on a stub.
+        self.assertFalse(by_key["ROBE-5059"]["stubbed"])
         # BACK-5F20 decided on docs-sourced has_people (scene stub
         # never consulted) -> not flagged.
         self.assertFalse(by_key["BACK-5F20"]["stubbed"])
+
+    def test_robe_publishing_facts_are_owner_verified(self):
+        robe = next(i for i in self.results["items"]
+                    if i["asset_key"] == "ROBE-5059")
+        self.assertEqual(robe["signals"]["scene_claim"], "product")
+        self.assertFalse(robe["signals"]["has_people"])
+        self.assertEqual(robe["signals"]["channel"], "instagram")
+        self.assertEqual(robe["signals"]["sku"], "NUDE-01")
+        for name in ("scene_claim", "has_people", "channel", "sku"):
+            self.assertEqual(robe["signal_sources"][name],
+                             "owner:Crystal:2026-09-12")
 
     def test_sealed_provenance_carried(self):
         for i in self.results["items"]:
@@ -50,10 +62,10 @@ class TestLocalMVP(unittest.TestCase):
 
     def test_coverage_computed(self):
         cov = {c["slot"]: c for c in self.results["coverage"]["slots"]}
-        self.assertEqual(cov["detail"]["status"], "HAVE")
-        self.assertEqual(cov["detail"]["members"], ["ROBE-5059"])
-        self.assertEqual(cov["hero"]["status"], "MISSING")
-        self.assertEqual(cov["hero"]["members"], [])
+        self.assertEqual(cov["hero"]["status"], "HAVE")
+        self.assertEqual(cov["hero"]["members"], ["ROBE-5059"])
+        self.assertEqual(cov["detail"]["status"], "MISSING")
+        self.assertEqual(cov["detail"]["members"], [])
 
     def test_coverage_missing_never_guessed(self):
         empty = compute_coverage(BRIEF, [])
@@ -67,7 +79,7 @@ class TestLocalMVP(unittest.TestCase):
             self.assertIn("Shortlist 1", text)
             self.assertIn("Remaining 3", text)
             self.assertIn("MISSING", text)
-            self.assertIn("STUB", text)
+            self.assertNotIn("ROBE-5059</strong> · STUB", text)
         finally:
             if dest.exists():
                 dest.unlink()
@@ -79,10 +91,9 @@ class TestLocalMVP(unittest.TestCase):
         self.assertIn("STUB", html_text)
         self.assertNotIn("18", html_text)
 
-    def test_public_ready_false_with_stubbed_shortlist(self):
-        # Stub ruling: a stubbed:true Shortlist must not feed the public
-        # workroom or any deployment. Machine-readable stop flag.
-        self.assertFalse(self.results["summary"]["public_ready"])
+    def test_public_ready_true_without_stubbed_shortlist(self):
+        self.assertEqual(self.results["summary"]["stubbed"], 0)
+        self.assertTrue(self.results["summary"]["public_ready"])
 
 
 if __name__ == "__main__":
