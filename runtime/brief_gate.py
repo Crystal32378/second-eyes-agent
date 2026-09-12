@@ -118,6 +118,7 @@ def gate(photo: dict, brief: dict | None) -> dict:
                     "old": old,
                     "signals": signals,
                     "signal_sources": dict(sources),
+                    "signals_used": list(used),
                     "manifest": photo.get("manifest"),
                 }
         return {
@@ -135,6 +136,7 @@ def gate(photo: dict, brief: dict | None) -> dict:
             "old": old,
             "signals": signals,
             "signal_sources": dict(sources),
+            "signals_used": list(used),
             "manifest": photo.get("manifest"),
         }
 
