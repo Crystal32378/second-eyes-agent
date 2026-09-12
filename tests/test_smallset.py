@@ -216,5 +216,76 @@ class TestCustodyRound3(unittest.TestCase):
             self.assertFalse(os.path.exists(out_path))
 
 
+def sealed_manifest(entries, convention="workroom:frame-full"):
+    return {"brief": "briefs/brief-v1.json", "ref_convention": convention,
+            "photos": entries}
+
+
+def sealed_entry(key, path="p", sha="s", old_label="none"):
+    return {"asset_key": key,
+            "manifest": {"path": path, "sha256": sha,
+                         "ref_convention": "workroom:frame-full"},
+            "old": {"colour": old_label, "item": old_label,
+                    "shot": old_label}}
+
+
+def manifest_entry(key, path="p", sha="s", old_label="none"):
+    return {"asset_key": key, "path": path, "sha256": sha,
+            "old_label": old_label}
+
+
+class TestSealedBinding(unittest.TestCase):
+    def test_ok(self):
+        from runtime.smallset import check_sealed_binding
+        m = sealed_manifest([manifest_entry("A")])
+        rep = check_sealed_binding(m, [sealed_entry("A")])
+        self.assertTrue(rep["ok"], rep["errors"])
+
+    def test_swapped_file_rejected(self):
+        # Same asset_key, another legal file + SHA: verify_manifest
+        # would still pass, but the sealed evidence belongs to the old
+        # file. Must stop.
+        from runtime.smallset import check_sealed_binding
+        m = sealed_manifest([manifest_entry("A", path="other.jpg",
+                                            sha="1" * 64)])
+        rep = check_sealed_binding(m, [sealed_entry("A")])
+        self.assertFalse(rep["ok"])
+        blob = " ".join(rep["errors"])
+        self.assertIn("other.jpg", blob)
+
+    def test_old_label_change_rejected(self):
+        from runtime.smallset import check_sealed_binding
+        m = sealed_manifest([manifest_entry("A", old_label="beige")])
+        rep = check_sealed_binding(m, [sealed_entry("A", old_label="none")])
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("old" in e for e in rep["errors"]))
+
+    def test_key_set_mismatch_rejected(self):
+        from runtime.smallset import check_sealed_binding
+        m = sealed_manifest([manifest_entry("A")])
+        rep = check_sealed_binding(m, [sealed_entry("B")])
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("missing in sealed: A" in e
+                            for e in rep["errors"]))
+
+    def test_sealed_duplicate_rejected(self):
+        from runtime.smallset import check_sealed_binding
+        m = sealed_manifest([manifest_entry("A")])
+        rep = check_sealed_binding(
+            m, [sealed_entry("A"), sealed_entry("A")])
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("duplicate" in e for e in rep["errors"]))
+
+    def test_real_sealed_binds_current_manifest(self):
+        from runtime.smallset import check_sealed_binding
+        manifest = json.loads((ROOT / "fixtures/smallset/manifest.json")
+                              .read_text(encoding="utf-8"))
+        sealed = json.loads(
+            (ROOT / "outputs/smallset-gate_20260912T094617Z.json")
+            .read_text(encoding="utf-8"))
+        rep = check_sealed_binding(manifest, sealed["items"])
+        self.assertTrue(rep["ok"], rep["errors"])
+
+
 if __name__ == "__main__":
     unittest.main()

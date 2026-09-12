@@ -129,3 +129,54 @@ def apply_manifest(manifest: dict, photos: list) -> list:
                         "ref_convention": manifest["ref_convention"],
                     }})
     return out
+
+
+def check_sealed_binding(manifest: dict, sealed_items: list) -> dict:
+    """Bind sealed model-gate items to the CURRENT manifest, per item.
+
+    The sealed file records the manifest {asset_key/path/sha256/
+    ref_convention} each evidence was produced against. If the manifest
+    has since changed for the same asset_key (e.g. swapped to another
+    legal file + SHA — verify_manifest alone would still pass), the
+    evidence no longer belongs to that photo and must stop.
+    Also checks: sealed old == mechanical expansion of the current
+    manifest old_label; key sets equal with equal counts and no
+    duplicates on either side.
+    Returns {"ok", "errors"}.
+    """
+    errors: list[str] = []
+    m_photos = (manifest or {}).get("photos") or []
+    m_keys = [p.get("asset_key") for p in m_photos]
+    s_keys = [i.get("asset_key") for i in sealed_items]
+    for dup in _duplicates(m_keys):
+        errors.append("manifest duplicate asset_key: {}".format(dup))
+    for dup in _duplicates(s_keys):
+        errors.append("sealed duplicate asset_key: {}".format(dup))
+    if len(sealed_items) != len(m_photos):
+        errors.append("count mismatch: manifest {} vs sealed {}".format(
+            len(m_photos), len(sealed_items)))
+    for k in sorted(set(m_keys) - set(s_keys)):
+        errors.append("missing in sealed: {}".format(k))
+    for k in sorted(set(s_keys) - set(m_keys)):
+        errors.append("sealed item not in manifest: {}".format(k))
+    by_key = {p["asset_key"]: p for p in m_photos}
+    convention = (manifest or {}).get("ref_convention")
+    for item in sealed_items:
+        key = item.get("asset_key", "?")
+        if key not in by_key:
+            continue
+        m = by_key[key]
+        sealed_manifest = item.get("manifest") or {}
+        for field in ("path", "sha256", "ref_convention"):
+            expected = m[field] if field != "ref_convention" else convention
+            if sealed_manifest.get(field) != expected:
+                errors.append(
+                    "{}: sealed manifest {!r} {!r} != current {!r}".format(
+                        key, field, sealed_manifest.get(field), expected))
+        old_label = m.get("old_label")
+        expected_old = {"colour": old_label, "item": old_label,
+                        "shot": old_label}
+        if (item.get("old") or {}) != expected_old:
+            errors.append(
+                "{}: sealed old != manifest old_label expansion".format(key))
+    return {"ok": not errors, "errors": errors}

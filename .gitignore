@@ -12,3 +12,6 @@ outputs/*.json
 # generated min-run viewer data (source viewer ui/minrun/results.html stays tracked)
 ui/minrun/results.json
 ui/minrun/preview.html
+# generated local-MVP viewer data (source viewer ui/minrun/local.html stays tracked)
+ui/minrun/local-mvp.json
+ui/minrun/preview-local.html

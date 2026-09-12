@@ -1,0 +1,29 @@
+{
+  "comment": "EDITOR-DECLARED publishing signals for the 6 smallset photos (local MVP wiring demo). has_people cites docs/demo-derivatives.md where the derivative manifest states it; scene/channel/sku assignments by the local editor are marked editor:mvp-stub and MUST be replaced by editor-verified facts before any real use. long_edge is NEVER declared here — the pipeline measures it from bytes. Items decided on stubbed signals carry stubbed:true in results.",
+  "signals": {
+    "BACK-5F20": {
+      "signals": {"scene_claim": "detail", "has_people": true, "channel": null, "sku": null},
+      "signal_sources": {"scene_claim": "editor:mvp-stub", "has_people": "docs/demo-derivatives.md"}
+    },
+    "IG-262": {
+      "signals": {"scene_claim": "product", "has_people": null, "channel": null, "sku": null},
+      "signal_sources": {"scene_claim": "ui/workroom/brief-established.html caption"}
+    },
+    "IG-277": {
+      "signals": {"scene_claim": "detail", "has_people": null, "channel": null, "sku": null},
+      "signal_sources": {"scene_claim": "ui/workroom/brief-established.html caption"}
+    },
+    "IMG-4489": {
+      "signals": {"scene_claim": null, "has_people": true, "channel": null, "sku": null},
+      "signal_sources": {"has_people": "docs/demo-derivatives.md"}
+    },
+    "ROBE-5059": {
+      "signals": {"scene_claim": "detail", "has_people": false, "channel": "instagram", "sku": "NUDE-01"},
+      "signal_sources": {"scene_claim": "editor:mvp-stub", "has_people": "docs/demo-derivatives.md", "channel": "editor:mvp-stub", "sku": "editor:mvp-stub"}
+    },
+    "WEAR-8106": {
+      "signals": {"scene_claim": null, "has_people": true, "channel": null, "sku": null},
+      "signal_sources": {"has_people": "docs/demo-derivatives.md"}
+    }
+  }
+}
