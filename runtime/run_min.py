@@ -88,7 +88,7 @@ def emit_preview(results: dict, dest: Path) -> None:
         cards.append(
             "<li><strong>{key}</strong> · {ev} / {ver} → {bucket}<br>"
             "<small>{reason} · 待辦：{pend} · 解決人：{res}<br>"
-            "觀察：{refs} · 訊號來源：{srcs}{fix}</small></li>".format(
+            "觀察：{refs} · 訊號來源：{srcs}{fix}{mani}</small></li>".format(
                 key=html.escape(it["asset_key"]),
                 ev=html.escape(it["evidence_state"]),
                 ver=html.escape(it["verdict"]),
@@ -98,7 +98,11 @@ def emit_preview(results: dict, dest: Path) -> None:
                 res=html.escape(it["resolver"]),
                 refs=html.escape(refs or "—"),
                 srcs=html.escape(srcs or "—"),
-                fix=" · FIXTURE" if it.get("fixture") else ""))
+                fix=" · FIXTURE" if it.get("fixture") else "",
+                mani=(" · 檔：{} [{}]".format(
+                    it["manifest"]["path"],
+                    (it["manifest"]["sha256"] or "")[:12])
+                    if it.get("manifest") else "")))
     dest.write_text(
         "<!doctype html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\">"
         "<title>Second Eyes — min-run preview</title></head><body>"
@@ -126,20 +130,31 @@ def main() -> int:
                              "before running; aborts on mismatch")
     args = parser.parse_args()
 
+    brief = None if args.no_brief else load_json(ROOT / args.brief)
+    obs_doc = load_json(ROOT / args.obs)
+    photos = obs_doc["photos"]
+    fixture = bool(obs_doc.get("fixture", False))
+
     if args.manifest:
-        from runtime.smallset import verify_manifest
-        report = verify_manifest(load_json(ROOT / args.manifest), ROOT)
-        if not report["ok"]:
+        from runtime.smallset import check_binding, verify_manifest
+        manifest = load_json(ROOT / args.manifest)
+        report = verify_manifest(manifest, ROOT)
+        binding = check_binding(manifest, photos, fixture)
+        errors = report["errors"] + binding["errors"]
+        if errors:
             print("MANIFEST FAILED:")
-            for e in report["errors"]:
+            for e in errors:
                 print(" -", e)
             return 2
         print("manifest ok:", args.manifest)
+        by_key = {p["asset_key"]: p for p in manifest["photos"]}
+        photos = [{**p, "manifest": {
+            "path": by_key[p["asset_key"]]["path"],
+            "sha256": by_key[p["asset_key"]]["sha256"],
+            "ref_convention": manifest["ref_convention"],
+        }} for p in photos]
 
-    brief = None if args.no_brief else load_json(ROOT / args.brief)
-    obs_doc = load_json(ROOT / args.obs)
-    results = run(brief, obs_doc["photos"],
-                  fixture=bool(obs_doc.get("fixture", False)))
+    results = run(brief, photos, fixture=fixture)
 
     out_path = ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)

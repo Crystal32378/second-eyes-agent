@@ -47,6 +47,14 @@ is tracked.
 - Real-image runs must pass `--manifest fixtures/smallset/manifest.json`
   first: asset presence, sha256, and `ref_convention` are verified and
   any mismatch aborts (exit 2) before any model call could happen.
+- Custody binding (`runtime/smallset.py::check_binding`, enforced by
+  `--manifest`): manifest asset_keys and observation asset_keys must
+  match exactly with equal counts — missing, extra, or duplicate keys
+  abort with exit 2 and nothing is written. `fixture:true`
+  observations are rejected in real mode. Every attached observation
+  ref must start with the manifest's `ref_convention`; each result
+  keeps its manifest `{path, sha256, ref_convention}`. Both viewers
+  render it.
 
 ## Expected model calls
 

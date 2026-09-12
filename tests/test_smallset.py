@@ -5,7 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from runtime.smallset import verify_manifest
+from runtime.smallset import check_binding, verify_manifest
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def manifest_for(path, sha, ref_convention="workroom:frame-full",
@@ -62,6 +64,75 @@ class TestVerifyManifest(unittest.TestCase):
         rep = verify_manifest(doc, root)
         self.assertTrue(rep["ok"], rep["errors"])
         self.assertEqual(len(rep["entries"]), 6)
+
+
+def tiny_manifest(keys, convention="workroom:frame-full"):
+    return {"brief": "briefs/brief-v1.json",
+            "ref_convention": convention,
+            "photos": [{"asset_key": k, "path": "p", "sha256": "s",
+                        "old_label": "none"} for k in keys]}
+
+
+def tiny_photo(key, ref="workroom:frame-full"):
+    return {"asset_key": key,
+            "observed": {"colour": {"value": "beige", "ref": ref}},
+            "old": {}, "signals": {}}
+
+
+class TestBinding(unittest.TestCase):
+    """Custody gate: manifest <-> observations must bind one to one."""
+
+    def test_ok_binding(self):
+        m = tiny_manifest(["A", "B"])
+        rep = check_binding(m, [tiny_photo("A"), tiny_photo("B")], False)
+        self.assertTrue(rep["ok"], rep["errors"])
+
+    def test_reported_counterexample_fails(self):
+        # Fu round 2: real manifest + unrelated FIX observations passed.
+        manifest = json.loads((ROOT / "fixtures/smallset/manifest.json")
+                              .read_text(encoding="utf-8"))
+        obs = json.loads((ROOT / "fixtures/minrun/observations.json")
+                         .read_text(encoding="utf-8"))
+        rep = check_binding(manifest, obs["photos"],
+                            bool(obs.get("fixture", False)))
+        self.assertFalse(rep["ok"])
+        blob = " ".join(rep["errors"])
+        self.assertIn("fixture:true", blob)
+        self.assertIn("not in manifest", blob)
+        self.assertIn("convention", blob)
+
+    def test_missing_entry_fails(self):
+        m = tiny_manifest(["A", "B"])
+        rep = check_binding(m, [tiny_photo("A")], False)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("count mismatch" in e for e in rep["errors"]))
+        self.assertTrue(any("missing in observations: B" in e
+                            for e in rep["errors"]))
+
+    def test_extra_entry_fails(self):
+        m = tiny_manifest(["A"])
+        rep = check_binding(m, [tiny_photo("A"), tiny_photo("Z")], False)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("not in manifest: Z" in e for e in rep["errors"]))
+
+    def test_duplicate_asset_fails(self):
+        m = tiny_manifest(["A"])
+        rep = check_binding(m, [tiny_photo("A"), tiny_photo("A")], False)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("duplicate" in e for e in rep["errors"]))
+
+    def test_fixture_mixing_rejected(self):
+        m = tiny_manifest(["A"])
+        rep = check_binding(m, [tiny_photo("A")], True)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("fixture:true" in e for e in rep["errors"]))
+
+    def test_ref_convention_mismatch_fails(self):
+        m = tiny_manifest(["A"])
+        rep = check_binding(m, [tiny_photo("A", ref="test:frame-full")],
+                            False)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("convention" in e for e in rep["errors"]))
 
 
 if __name__ == "__main__":

@@ -16,6 +16,18 @@ from pathlib import Path
 
 REQUIRED_ENTRY_KEYS = ("asset_key", "path", "sha256", "old_label")
 
+#: Marker for "no provenance declared". Treated as missing everywhere.
+UNRESOLVED_SOURCE = "未指定"
+
+
+def _duplicates(keys: list) -> list:
+    seen, dupes = set(), []
+    for k in keys:
+        if k in seen and k not in dupes:
+            dupes.append(k)
+        seen.add(k)
+    return dupes
+
 
 def verify_manifest(manifest: dict, root: Path) -> dict:
     """Verify asset/sha/ref-convention. Returns {"ok", "entries", "errors"}."""
@@ -46,3 +58,48 @@ def verify_manifest(manifest: dict, root: Path) -> dict:
         entries.append(item)
     return {"ok": not errors, "ref_convention": ref_convention,
             "entries": entries, "errors": errors}
+
+
+def check_binding(manifest: dict, photos: list, fixture: bool) -> dict:
+    """Bind manifest entries to observations, one to one.
+
+    Custody gate: proves "that evidence belongs to that photo" before any
+    model call may use it. Failures (exit 2 in run_min, nothing written):
+    - fixture:true observations in real --manifest mode are rejected.
+    - asset_key sets must match exactly with equal counts: missing,
+      extra, or duplicate keys fail.
+    - every attached observation ref must start with the manifest's
+      ref_convention (the convention alone being non-empty is not enough).
+    Returns {"ok", "errors"}.
+    """
+    errors: list[str] = []
+    if fixture:
+        errors.append("real --manifest mode rejects fixture:true observations")
+    m_photos = (manifest or {}).get("photos") or []
+    m_keys = [p.get("asset_key") for p in m_photos]
+    o_keys = [p.get("asset_key") for p in photos]
+    for dup in _duplicates(m_keys):
+        errors.append("manifest duplicate asset_key: {}".format(dup))
+    for dup in _duplicates(o_keys):
+        errors.append("observations duplicate asset_key: {}".format(dup))
+    if len(photos) != len(m_photos):
+        errors.append("count mismatch: manifest {} vs observations {}".format(
+            len(m_photos), len(photos)))
+    for k in sorted(set(m_keys) - set(o_keys)):
+        errors.append("missing in observations: {}".format(k))
+    for k in sorted(set(o_keys) - set(m_keys)):
+        errors.append("not in manifest: {}".format(k))
+    convention = (manifest or {}).get("ref_convention")
+    if not convention:
+        errors.append("cannot check refs: manifest missing ref_convention")
+    else:
+        for p in photos:
+            key = p.get("asset_key", "?")
+            for field, sel in (p.get("observed") or {}).items():
+                if (isinstance(sel, dict) and sel.get("value")
+                        and sel.get("ref")
+                        and not str(sel["ref"]).startswith(convention)):
+                    errors.append(
+                        "{}: ref {!r} does not match convention {!r}".format(
+                            key, sel["ref"], convention))
+    return {"ok": not errors, "errors": errors}

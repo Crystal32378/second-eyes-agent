@@ -22,8 +22,13 @@ def photo(key):
     return next(p for p in OBS if p["asset_key"] == key)
 
 
+def sourced(p, source="test:declared"):
+    """Declare an explicit source for every signal (custody gate input)."""
+    return {**p, "signal_sources": {s: source for s in p.get("signals", {})}}
+
+
 def gated(key, brief=BRIEF):
-    p = photo(key)
+    p = sourced(photo(key))
     state = route({"observed": p.get("observed") or {},
                    "old": p.get("old") or {}})
     return gate({**p, "evidence_state": state}, brief), state
@@ -126,6 +131,7 @@ class TestPeopleSignalTriState(unittest.TestCase):
         }
 
     def _gate(self, photo):
+        photo = sourced(photo)
         state = route({"observed": photo["observed"], "old": photo["old"]})
         self.assertEqual(state, "CLEAR")
         return gate({**photo, "evidence_state": state}, BRIEF)
@@ -144,6 +150,51 @@ class TestPeopleSignalTriState(unittest.TestCase):
             r = self._gate(self._photo(bad))
             self.assertEqual(r["bucket"], "Needs Review")
             self.assertIn("資料錯誤", r["reason"])
+
+
+class TestSignalSources(unittest.TestCase):
+    """Custody: a consulted signal without a real source stops at
+    Needs Review — never Shortlist. Missing key, empty string, and
+    未指定 all count as sourceless."""
+
+    def _match_photo(self, sources):
+        p = sourced(photo("FIX-NEW-MATCH"))
+        if sources == "ABSENT":
+            p = {k: v for k, v in p.items() if k != "signal_sources"}
+        elif sources != "DECLARED":
+            p["signal_sources"] = sources
+        return p
+
+    def _gate(self, p):
+        state = route({"observed": p["observed"], "old": p["old"]})
+        self.assertEqual(state, "NEW")
+        return gate({**p, "evidence_state": state}, BRIEF)
+
+    def test_declared_sources_shortlist(self):
+        r = self._gate(self._match_photo("DECLARED"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("符合", "Shortlist"))
+
+    def test_absent_sources_key_stops(self):
+        r = self._gate(self._match_photo("ABSENT"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+        self.assertIn("訊號來源", r["reason"])
+
+    def test_empty_and_unresolved_sources_stop(self):
+        base = {s: "test:declared"
+                for s in photo("FIX-NEW-MATCH")["signals"]}
+        for bad in ("", "未指定"):
+            srcs = dict(base, long_edge=bad)
+            r = self._gate(self._match_photo(srcs))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("long_edge", r["reason"])
+
+    def test_manifest_passthrough(self):
+        p = self._match_photo("DECLARED")
+        p["manifest"] = {"path": "ui/workroom/assets/X.jpg",
+                         "sha256": "0" * 64,
+                         "ref_convention": "workroom:frame-full"}
+        r = self._gate(p)
+        self.assertEqual(r["manifest"]["path"], "ui/workroom/assets/X.jpg")
 
 
 class TestTraceability(unittest.TestCase):

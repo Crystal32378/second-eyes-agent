@@ -31,7 +31,8 @@ fetch("results.json").then(r => r.json()).then(d => {
       .map(([k, v]) => `${k}=${v.value} [${v.ref}]`).join(", ") || "—";
     const srcs = Object.entries(it.signal_sources || {})
       .map(([k, v]) => `${k}←${v}`).join(", ") || "—";
-    li.querySelector(".trace").textContent = `觀察：${refs} · 訊號來源：${srcs}`;
+    li.querySelector(".trace").textContent = `觀察：${refs} · 訊號來源：${srcs}` +
+      (it.manifest ? ` · 檔：${it.manifest.path} [${(it.manifest.sha256 || "").slice(0, 12)}]` : "");
     ul.appendChild(li);
   });
 }).catch(() => {
