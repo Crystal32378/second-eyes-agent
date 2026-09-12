@@ -52,3 +52,20 @@ Fu for verification; no merge, no deploy, public workroom untouched.
   refs exactly `workroom:frame-full`, manifest path/sha attached.
 - No schema/quota/provider/custody anomaly encountered. No accuracy
   claimed: selections are observations with refs, pending human review.
+- Rerun note (precise): zero application-level reruns observed in this
+  run; SDK/internal transport retry behavior was not independently
+  instrumented.
+
+## Result receipt (immutable, verified by Fu)
+
+Gate accepted by Fu. Result file (local, git-ignored):
+
+`outputs/smallset-gate_20260912T094617Z.json`
+SHA-256: `15536244669f8e2b6b76f8df5a3e03dc2f2cf4f45e870716c5a759e5b3fca709`
+
+Scope proven (exact wording): Six real image observations completed
+through the custody-aware runtime and correctly stopped at human review
+when a required publishing signal was absent.
+
+Not claimed: the shortlist runtime is NOT complete. What stands is the
+traceable observation chain and the fail-closed gate.
