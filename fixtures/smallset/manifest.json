@@ -1,6 +1,7 @@
 {
   "comment": "Approved small set for the FUTURE gated model test (next gate, NOT run on this branch). All files are existing public derivatives under ui/workroom/assets. No pixels added.",
   "brief": "briefs/brief-v1.json",
+  "ref_convention": "workroom:frame-full",
   "model_calls_expected": 6,
   "note": "1 call per image (fresh agent per photo) + 0 video. A text-only connectivity check would add 1 extra call if the gate requires it.",
   "photos": [

@@ -35,6 +35,19 @@ are git-ignored local artifacts; they stay on disk for acceptance and
 are never committed. Only `ui/minrun/results.html` (the viewer source)
 is tracked.
 
+## Guarantees added for acceptance
+
+- `has_people` is tri-state under `no_people=true`: `true` → 明確不符
+  (Remaining); missing/`null` → 證據不足 (Needs Review); non-boolean →
+  資料錯誤 (Needs Review, never passes).
+- Results keep per-item `observed` (values + refs), `signals`, and
+  `signal_sources`; both viewer pages render them. Fixed inputs are
+  marked `"fixture": true` from `fixtures/minrun/observations.json`
+  through to each result item.
+- Real-image runs must pass `--manifest fixtures/smallset/manifest.json`
+  first: asset presence, sha256, and `ref_convention` are verified and
+  any mismatch aborts (exit 2) before any model call could happen.
+
 ## Expected model calls
 
 - This branch: **0**. All tests and pipeline runs use fixed observations;

@@ -40,14 +40,22 @@ def load_json(path: Path | None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def run(brief: dict | None, photos: list) -> dict:
+def run(brief: dict | None, photos: list, fixture: bool = False) -> dict:
     items = []
     for photo in photos:
         evidence_state = route({"observed": photo.get("observed") or {},
                                 "old": photo.get("old") or {}})
+        # Default signal source when the input does not declare one:
+        # fixed test data -> fixture:staged; anything else -> 未指定
+        # (never guessed). Real runs must declare per-signal sources.
+        if "signal_sources" not in photo:
+            default = ("fixture:staged" if fixture else "未指定")
+            photo = {**photo, "signal_sources": {
+                s: default for s in (photo.get("signals") or {})}}
         # Local import keeps module import light for tests.
         from runtime.brief_gate import gate
         result = gate({**photo, "evidence_state": evidence_state}, brief)
+        result["fixture"] = bool(fixture)
         items.append(result)
     summary = {
         BUCKET_SHORTLIST: sum(1 for i in items if i["bucket"] == BUCKET_SHORTLIST),
@@ -57,6 +65,7 @@ def run(brief: dict | None, photos: list) -> dict:
     }
     return {
         "brief_id": (brief or {}).get("brief_id") if brief else None,
+        "fixture": bool(fixture),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model_calls": 0,
         "items": items,
@@ -69,16 +78,27 @@ def emit_preview(results: dict, dest: Path) -> None:
     cards = []
     for it in results["items"]:
         pend = ("; ".join(it["pending"]) if it["pending"] else "—")
+        refs = ", ".join(
+            "{}={} [{}]".format(f, (v or {}).get("value"),
+                                (v or {}).get("ref"))
+            for f, v in (it.get("observed") or {}).items() if v)
+        srcs = ", ".join(
+            "{}←{}".format(k, v)
+            for k, v in (it.get("signal_sources") or {}).items())
         cards.append(
             "<li><strong>{key}</strong> · {ev} / {ver} → {bucket}<br>"
-            "<small>{reason} · 待辦：{pend} · 解決人：{res}</small></li>".format(
+            "<small>{reason} · 待辦：{pend} · 解決人：{res}<br>"
+            "觀察：{refs} · 訊號來源：{srcs}{fix}</small></li>".format(
                 key=html.escape(it["asset_key"]),
                 ev=html.escape(it["evidence_state"]),
                 ver=html.escape(it["verdict"]),
                 bucket=html.escape(it["bucket"]),
                 reason=html.escape(it["reason"]),
                 pend=html.escape(pend),
-                res=html.escape(it["resolver"])))
+                res=html.escape(it["resolver"]),
+                refs=html.escape(refs or "—"),
+                srcs=html.escape(srcs or "—"),
+                fix=" · FIXTURE" if it.get("fixture") else ""))
     dest.write_text(
         "<!doctype html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\">"
         "<title>Second Eyes — min-run preview</title></head><body>"
@@ -101,11 +121,25 @@ def main() -> int:
     parser.add_argument("--obs", default="fixtures/minrun/observations.json")
     parser.add_argument("--out", default="outputs/minrun.json")
     parser.add_argument("--emit-preview", default=None)
+    parser.add_argument("--manifest", default=None,
+                        help="verify a small-set manifest (asset/sha/ref) "
+                             "before running; aborts on mismatch")
     args = parser.parse_args()
+
+    if args.manifest:
+        from runtime.smallset import verify_manifest
+        report = verify_manifest(load_json(ROOT / args.manifest), ROOT)
+        if not report["ok"]:
+            print("MANIFEST FAILED:")
+            for e in report["errors"]:
+                print(" -", e)
+            return 2
+        print("manifest ok:", args.manifest)
 
     brief = None if args.no_brief else load_json(ROOT / args.brief)
     obs_doc = load_json(ROOT / args.obs)
-    results = run(brief, obs_doc["photos"])
+    results = run(brief, obs_doc["photos"],
+                  fixture=bool(obs_doc.get("fixture", False)))
 
     out_path = ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)

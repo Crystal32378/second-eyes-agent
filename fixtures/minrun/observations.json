@@ -1,5 +1,6 @@
 {
-  "comment": "Fixed test observations for min-run wiring. No model calls: observed tokens are staged with refs, evidence_state is derived via agent.loop.route. Covers 缺證據 / 明確不符 / 新照片符合; 缺 brief is the same set run with brief=None.",
+  "fixture": true,
+  "comment": "FIXED TEST DATA — staged observations with staged refs, NOT model output. Any result derived from this file is plumbing verification only.",
   "photos": [
     {
       "asset_key": "FIX-NEW-MATCH",

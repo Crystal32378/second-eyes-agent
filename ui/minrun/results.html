@@ -22,11 +22,16 @@ fetch("results.json").then(r => r.json()).then(d => {
   const ul = document.getElementById("cards");
   d.items.forEach(it => {
     const li = document.createElement("li");
-    li.innerHTML = `<strong></strong> <span></span><br><small></small>`;
-    li.querySelector("strong").textContent = it.asset_key;
+    li.innerHTML = `<strong></strong> <span></span><br><small></small><br><small class="trace"></small>`;
+    li.querySelector("strong").textContent = it.asset_key + (it.fixture ? " · FIXTURE" : "");
     li.querySelector("span").textContent = `${it.evidence_state} / ${it.verdict} → ${it.bucket}`;
     li.querySelector("small").textContent =
       `${it.reason} · 待辦：${it.pending.join("; ") || "—"} · 解決人：${it.resolver}`;
+    const refs = Object.entries(it.observed || {}).filter(([k, v]) => v)
+      .map(([k, v]) => `${k}=${v.value} [${v.ref}]`).join(", ") || "—";
+    const srcs = Object.entries(it.signal_sources || {})
+      .map(([k, v]) => `${k}←${v}`).join(", ") || "—";
+    li.querySelector(".trace").textContent = `觀察：${refs} · 訊號來源：${srcs}`;
     ul.appendChild(li);
   });
 }).catch(() => {

@@ -90,6 +90,12 @@ def gate(photo: dict, brief: dict | None) -> dict:
             "reason": reason,
             "pending": list(pending),
             "resolver": _resolver(brief, resolver_key),
+            # Traceability: keep the observation refs and the signals
+            # (with their sources) that the brief verdict was based on,
+            # so the viewer can show why a photo was bucketed.
+            "observed": observed,
+            "signals": signals,
+            "signal_sources": dict(photo.get("signal_sources") or {}),
         }
 
     # 1. Missing brief: no clearance basis, everything needs review.
@@ -126,10 +132,25 @@ def gate(photo: dict, brief: dict | None) -> dict:
 
     # 4. Hard constraints: signal present + violates -> 明確不符.
     #    Signal absent while constrained -> 證據不足 (CLEAR can land here).
-    if hard.get("no_people") and signals.get("has_people") is True:
-        return out(VERDICT_MISMATCH, BUCKET_REMAINING,
-                   "明確不符：brief 要求無人物",
-                   [], "constraint")
+    #    has_people is tri-state: True violates no_people; missing/null
+    #    cannot prove absence -> Needs Review; non-boolean is a data
+    #    error -> Needs Review, never passes.
+    if hard.get("no_people"):
+        hp = signals.get("has_people")
+        if isinstance(hp, bool):
+            if hp is True:
+                return out(VERDICT_MISMATCH, BUCKET_REMAINING,
+                           "明確不符：brief 要求無人物",
+                           [], "constraint")
+        elif hp is None:
+            return out(VERDICT_INSUFFICIENT, BUCKET_REVIEW,
+                       "證據不足：缺人物訊號，無法核對無人物約束",
+                       ["補人物訊號"], "constraint")
+        else:
+            return out(VERDICT_INSUFFICIENT, BUCKET_REVIEW,
+                       "資料錯誤：has_people 非 boolean（{}），不得通過".format(
+                           type(hp).__name__),
+                       ["修正人物訊號為 boolean"], "constraint")
     min_edge = hard.get("min_long_edge")
     if min_edge is not None:
         edge = signals.get("long_edge")

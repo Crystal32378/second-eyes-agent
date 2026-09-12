@@ -106,5 +106,70 @@ class TestPipelineCounts(unittest.TestCase):
                 dest.unlink()
 
 
+class TestPeopleSignalTriState(unittest.TestCase):
+    """Fu regression: has_people missing/null must stop, non-boolean
+    is a data error. Neither may pass the no_people gate."""
+
+    def _photo(self, has_people):
+        signals = {"scene_claim": "product", "long_edge": 1400,
+                   "channel": "instagram", "sku": "NUDE-01"}
+        if has_people != "ABSENT":
+            signals["has_people"] = has_people
+        return {
+            "asset_key": "REG-PEOPLE",
+            "observed": {
+                "colour": {"value": "beige", "ref": "test:frame-full"},
+                "item": {"value": "bra", "ref": "test:frame-full"},
+            },
+            "old": {"colour": "beige", "item": "bra"},
+            "signals": signals,
+        }
+
+    def _gate(self, photo):
+        state = route({"observed": photo["observed"], "old": photo["old"]})
+        self.assertEqual(state, "CLEAR")
+        return gate({**photo, "evidence_state": state}, BRIEF)
+
+    def test_missing_key_stops(self):
+        r = self._gate(self._photo("ABSENT"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+        self.assertIn("人物訊號", r["reason"])
+
+    def test_null_stops(self):
+        r = self._gate(self._photo(None))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+
+    def test_non_boolean_is_data_error(self):
+        for bad in ("yes", 1, ["no"]):
+            r = self._gate(self._photo(bad))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("資料錯誤", r["reason"])
+
+
+class TestTraceability(unittest.TestCase):
+    def test_results_keep_refs_sources_and_fixture_flag(self):
+        results = run(BRIEF, OBS, fixture=True)
+        self.assertTrue(results["fixture"])
+        first = next(i for i in results["items"]
+                     if i["asset_key"] == "FIX-NEW-MATCH")
+        self.assertEqual(first["observed"]["colour"]["ref"], "test:frame-full")
+        self.assertTrue(all(v == "fixture:staged"
+                            for v in first["signal_sources"].values()))
+        self.assertTrue(first["fixture"])
+
+    def test_preview_shows_refs_and_sources(self):
+        results = run(BRIEF, OBS, fixture=True)
+        dest = ROOT / "outputs" / "test-preview.html"
+        try:
+            emit_preview(results, dest)
+            text = dest.read_text(encoding="utf-8")
+            self.assertIn("test:frame-full", text)
+            self.assertIn("fixture:staged", text)
+            self.assertIn("FIXTURE", text)
+        finally:
+            if dest.exists():
+                dest.unlink()
+
+
 if __name__ == "__main__":
     unittest.main()
