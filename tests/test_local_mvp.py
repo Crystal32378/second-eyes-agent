@@ -72,6 +72,13 @@ class TestLocalMVP(unittest.TestCase):
             if dest.exists():
                 dest.unlink()
 
+    def test_local_viewer_wires_to_local_mvp_json(self):
+        html_text = (ROOT / "ui/minrun/local.html").read_text(encoding="utf-8")
+        self.assertIn('fetch("local-mvp.json")', html_text)
+        self.assertIn('id="coverage"', html_text)
+        self.assertIn("STUB", html_text)
+        self.assertNotIn("18", html_text)
+
 
 if __name__ == "__main__":
     unittest.main()
