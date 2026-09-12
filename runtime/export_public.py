@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """Export the sanitized public runtime payload — mechanical, no hand-filling.
 
-Reads outputs/local-mvp.json (local, git-ignored) and writes the public
-bundle under ui/runtime/:
+Lineage rule: the published bundle is derived from a LOCAL MVP RECOMPUTED
+here from the SHA-sealed model-gate input (runtime.local_mvp.run), never
+from the on-disk outputs/local-mvp.json, which is git-ignored and locally
+editable. If that file is present it must agree item-by-item with the
+recompute; any divergence stops the export. Nothing is written until every
+check passes, so a stopped export leaves no partial bundle behind.
+
+Writes the public bundle under ui/runtime/:
   results.json  — allowlisted fields only (see PUBLIC_ITEM_FIELDS).
   assets/       — byte-exact copies of the 6 manifest images (SHA re-verified).
   styles.css    — byte-exact copy of the workroom stylesheet (visual continuity).
@@ -22,6 +28,7 @@ import hashlib
 import json
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +37,8 @@ if SCRIPT_DIR in sys.path:
     sys.path.remove(SCRIPT_DIR)
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from runtime.local_mvp import run as local_mvp_run  # noqa: E402
 
 LOCAL_MVP = ROOT / "outputs/local-mvp.json"
 MANIFEST_PATH = ROOT / "fixtures/smallset/manifest.json"
@@ -112,8 +121,80 @@ def fail(msg: str) -> int:
     return 2
 
 
+# Fields that decide what the public page says. The on-disk local MVP may
+# differ from the recompute ONLY in fields nobody publishes (generated_at).
+# Anything in this projection is lineage-bearing and must match exactly.
+LINEAGE_TOP = ("brief_id", "sealed_sha256", "coverage")
+LINEAGE_SUMMARY = ("Shortlist", "Needs Review", "Remaining", "total",
+                   "stubbed", "public_ready")
+LINEAGE_ITEM = ("asset_key", "evidence_state", "verdict", "bucket", "reason",
+                "pending", "observed", "signals", "signal_sources",
+                "signals_used", "resolver", "stubbed", "manifest")
+
+
+def lineage_projection(doc: dict) -> dict:
+    """The publish-relevant slice of a local MVP document."""
+    return {
+        "top": {k: doc.get(k) for k in LINEAGE_TOP},
+        "summary": {k: (doc.get("summary") or {}).get(k)
+                    for k in LINEAGE_SUMMARY},
+        "items": [{k: it.get(k) for k in LINEAGE_ITEM}
+                  for it in doc.get("items") or []],
+    }
+
+
+def lineage_diff(recomputed: dict, on_disk: dict) -> list:
+    """Item-by-item divergence list; empty means the file is trustworthy."""
+    a, b = lineage_projection(recomputed), lineage_projection(on_disk)
+    diffs = []
+    for k in LINEAGE_TOP:
+        if a["top"][k] != b["top"][k]:
+            diffs.append("top-level {!r} differs".format(k))
+    for k in LINEAGE_SUMMARY:
+        if a["summary"][k] != b["summary"][k]:
+            diffs.append("summary {!r}: recomputed {!r} != file {!r}".format(
+                k, a["summary"][k], b["summary"][k]))
+    if len(a["items"]) != len(b["items"]):
+        diffs.append("item count: recomputed {} != file {}".format(
+            len(a["items"]), len(b["items"])))
+    else:
+        for x, y in zip(a["items"], b["items"]):
+            for k in LINEAGE_ITEM:
+                if x.get(k) != y.get(k):
+                    diffs.append("{}: {!r} recomputed {!r} != file {!r}".format(
+                        x.get("asset_key") or y.get("asset_key"), k,
+                        x.get(k), y.get(k)))
+    return diffs
+
+
+def load_verified_local() -> tuple[dict | None, str | None]:
+    """Recompute the local MVP from sealed input; cross-check the file.
+
+    The recompute is the source of truth. outputs/local-mvp.json is
+    advisory only: when present it must agree on every lineage-bearing
+    field, otherwise the export stops rather than publishing a payload
+    whose provenance cannot be re-derived.
+    """
+    recomputed, error = local_mvp_run()
+    if error:
+        return None, "local MVP recompute failed: {}".format(error)
+    if LOCAL_MVP.is_file():
+        try:
+            on_disk = json.loads(LOCAL_MVP.read_text(encoding="utf-8"))
+        except (ValueError, OSError) as e:
+            return None, "outputs/local-mvp.json unreadable: {}".format(e)
+        diffs = lineage_diff(recomputed, on_disk)
+        if diffs:
+            return None, ("outputs/local-mvp.json diverges from the sealed "
+                          "recompute ({} difference(s)); first: {}".format(
+                              len(diffs), diffs[0]))
+    return recomputed, None
+
+
 def main() -> int:
-    local = json.loads(LOCAL_MVP.read_text(encoding="utf-8"))
+    local, lineage_error = load_verified_local()
+    if lineage_error:
+        return fail(lineage_error)
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     by_key = {p["asset_key"]: p for p in manifest["photos"]}
 
@@ -121,8 +202,20 @@ def main() -> int:
         return fail("local MVP summary.public_ready is not true — refusing "
                     "to publish a stubbed batch")
 
-    DEST.mkdir(parents=True, exist_ok=True)
-    (DEST / "assets").mkdir(parents=True, exist_ok=True)
+    # Everything is built in a staging directory on the same filesystem and
+    # moved into place only after every check passes, so an EXPORT STOP can
+    # never leave a half-written bundle (or a stale asset) behind.
+    stage_parent = DEST.parent
+    stage_parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix=".runtime-stage-", dir=stage_parent))
+    try:
+        return build(local, manifest, by_key, stage)
+    finally:
+        shutil.rmtree(stage, ignore_errors=True)
+
+
+def build(local: dict, manifest: dict, by_key: dict, stage: Path) -> int:
+    (stage / "assets").mkdir(parents=True, exist_ok=True)
 
     items = []
     for src in local["items"]:
@@ -135,7 +228,7 @@ def main() -> int:
         digest = hashlib.sha256(src_file.read_bytes()).hexdigest()
         if digest.lower() != by_key[key]["sha256"].lower():
             return fail("asset SHA mismatch: {}".format(key))
-        dest_file = DEST / "assets" / src_file.name
+        dest_file = stage / "assets" / src_file.name
         shutil.copyfile(src_file, dest_file)
         if hashlib.sha256(dest_file.read_bytes()).hexdigest().lower() != digest.lower():
             return fail("copy verification failed: {}".format(key))
@@ -170,7 +263,7 @@ def main() -> int:
         items.append(item)
 
     payload = {
-        "page": "verified 6-image runtime",
+        "page": "recorded 6-image run (static viewer)",
         "brief_id": local["brief_id"],
         "sealed_sha256": local["sealed_sha256"],
         "summary": {k: local["summary"][k] for k in
@@ -185,12 +278,31 @@ def main() -> int:
             return fail("sanitization audit hit: {!r}".format(marker))
 
     css_src = WORKROOM / "styles.css"
-    css_dest = DEST / "styles.css"
+    css_dest = stage / "styles.css"
     shutil.copyfile(css_src, css_dest)
     if css_src.read_bytes() != css_dest.read_bytes():
         return fail("stylesheet copy mismatch")
 
-    (DEST / "results.json").write_text(text, encoding="utf-8")
+    (stage / "results.json").write_text(text, encoding="utf-8")
+
+    # Commit: index.html is authored, not generated, so it is preserved
+    # across the swap; every generated file comes from the staging dir.
+    index_html = DEST / "index.html"
+    keep = index_html.read_bytes() if index_html.is_file() else None
+    DEST.mkdir(parents=True, exist_ok=True)
+    for name in ("results.json", "styles.css"):
+        shutil.copyfile(stage / name, DEST / name)
+    assets_dest = DEST / "assets"
+    assets_dest.mkdir(parents=True, exist_ok=True)
+    staged_assets = {f.name for f in (stage / "assets").iterdir()}
+    for f in sorted((stage / "assets").iterdir()):
+        shutil.copyfile(f, assets_dest / f.name)
+    for f in sorted(assets_dest.iterdir()):
+        if f.name not in staged_assets:
+            f.unlink()
+    if keep is not None and index_html.read_bytes() != keep:
+        return fail("viewer index.html was modified by the export")
+
     print("exported {} items to {}".format(len(items), DEST / "results.json"))
     print("summary:", json.dumps(payload["summary"], ensure_ascii=False))
     return 0

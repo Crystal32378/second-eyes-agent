@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Second Eyes — Verified 6-image runtime</title>
+<title>Second Eyes — Recorded 6-image run (static viewer)</title>
 <link rel="stylesheet" href="styles.css">
 <style>
 .runtime-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
@@ -18,22 +18,22 @@
 </style>
 </head>
 <body>
-<div class="preview-bar"><span>LIVE SMALL-SET RUNTIME · 6 VERIFIED ASSETS · COUNTS COMPUTED FROM RESULTS</span><nav aria-label="Runtime states"><a href="../workroom/brief-established.html">00 400-photo scenario</a><a href="index.html" aria-current="page">01 Verified 6-image runtime</a></nav></div>
+<div class="preview-bar"><span>RECORDED SMALL-SET RUN · 6 CUSTODY-VERIFIED ASSETS · COUNTS COMPUTED FROM SEALED RESULTS</span><nav aria-label="Runtime states"><a href="../workroom/brief-established.html">00 400-photo scenario</a><a href="index.html" aria-current="page">01 Recorded 6-image run</a></nav></div>
 <div class="page">
-<header class="masthead"><div><div class="brand">Second <span>Eyes</span></div><div class="tagline">Most things stay filed. Questions come to you.</div></div><div class="edition">Verified runtime<strong>6 assets · live decisions</strong></div></header>
+<header class="masthead"><div><div class="brand">Second <span>Eyes</span></div><div class="tagline">Most things stay filed. Questions come to you.</div></div><div class="edition">Recorded run<strong>6 custody-verified assets</strong></div></header>
 
-<section class="brief" aria-labelledby="runtime-title"><div><div class="eyebrow">Verified small-set runtime</div><h1 id="runtime-title">Six photos, decided in the open.</h1><p id="summary">Loading verified results…</p></div><div class="brief-terms"><div><div class="eyebrow">Coverage</div><p id="coverage">Loading…</p></div><div><div class="eyebrow">Standing rule</div><p>Candidate, not clearance. No ranking, no taste, no legal clearance, no accuracy claim.</p></div></div></section>
+<section class="brief" aria-labelledby="runtime-title"><div><div class="eyebrow">Recorded small-set run</div><h1 id="runtime-title">Six photos, decided in the open.</h1><p id="summary">Loading sealed results…</p></div><div class="brief-terms"><div><div class="eyebrow">Coverage</div><p id="coverage">Loading…</p></div><div><div class="eyebrow">Standing rule</div><p>Candidate, not clearance. No ranking, no taste, no legal clearance, no accuracy claim.</p></div></div></section>
 
 <section aria-label="Decided cards"><div id="cards" class="runtime-grid"></div></section>
 
-<section class="brief" aria-label="Scope note"><div><div class="eyebrow">Scope</div><p>This page shows one verified 6-image runtime. The <a href="../workroom/brief-established.html">400-photo scenario</a> is a separate presentation layer; its mock counts (18 / 7 / 375) are illustrative and are never combined with the counts on this page.</p></div></section>
-<noscript><p>Verified results: 1 Shortlist · 2 Needs Review · 3 Remaining. Hero / Product — HAVE (ROBE-5059). Detail — MISSING, not guessed. Enable JavaScript for full per-card reasons.</p></noscript>
+<section class="brief" aria-label="Scope note"><div><div class="eyebrow">Scope</div><p>This page is a static viewer over one recorded small-set run. Nothing here calls a model: the decisions were computed once from a SHA-sealed model-gate result and written to a file, and this page only reads that file. The <a href="../workroom/brief-established.html">400-photo scenario</a> is a separate presentation layer; its mock counts (18 / 7 / 375) are illustrative and are never combined with the counts on this page.</p></div></section>
+<noscript><p>Recorded results: 1 Shortlist · 2 Needs Review · 3 Remaining. Hero / Product — HAVE (ROBE-5059). Detail — MISSING, not guessed. Enable JavaScript for full per-card reasons.</p></noscript>
 </div>
 <script>
 fetch("results.json").then(r => r.json()).then(d => {
   const s = d.summary;
   document.getElementById("summary").textContent =
-    `${s["Shortlist"]} Shortlist · ${s["Needs Review"]} Needs Review · ${s["Remaining"]} Remaining — counts computed from results, never combined with the 400-photo scenario.`;
+    `${s["Shortlist"]} Shortlist · ${s["Needs Review"]} Needs Review · ${s["Remaining"]} Remaining — counts computed from the sealed results, never combined with the 400-photo scenario.`;
   document.getElementById("coverage").textContent =
     d.coverage.slots.map(c => `${c.slot} / ${c.scene} — ${c.status}` +
       (c.members.length ? ` (${c.members.join(", ")})` : "") +
@@ -74,7 +74,7 @@ fetch("results.json").then(r => r.json()).then(d => {
   });
 }).catch(() => {
   document.getElementById("summary").textContent =
-    "Could not load results.json over this connection. Serve this directory over http (see docs/runtime-viewer.md) or open the static preview.";
+    "Could not load results.json over this connection. Serve this directory over http (see docs/runtime-deploy.md).";
 });
 </script>
 </body>

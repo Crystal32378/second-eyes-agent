@@ -1,10 +1,12 @@
-name: Deploy workroom to GitHub Pages
+name: Deploy workroom + runtime viewer to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - "ui/workroom/**"
+      - "ui/runtime/**"
+      - "tools/build_pages.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +32,17 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload static workroom
+      # Workroom keeps the existing root URL; the runtime viewer is staged
+      # at /runtime/. The two live at different depths on the site than in
+      # the repo, so the build rewrites the cross-links and then refuses to
+      # publish if any local link fails to resolve inside the artifact.
+      - name: Stage Pages artifact (workroom at root, runtime at /runtime/)
+        run: python3 tools/build_pages.py --out _site --print-manifest
+
+      - name: Upload static site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ui/workroom
+          path: _site
 
       - name: Deploy GitHub Pages
         id: deployment

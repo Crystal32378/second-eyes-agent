@@ -15,3 +15,5 @@ ui/minrun/preview.html
 # generated local-MVP viewer data (source viewer ui/minrun/local.html stays tracked)
 ui/minrun/local-mvp.json
 ui/minrun/preview-local.html
+# staged GitHub Pages artifact (built by tools/build_pages.py)
+_site/
