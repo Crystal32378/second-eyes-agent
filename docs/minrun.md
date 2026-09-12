@@ -8,17 +8,32 @@ Public `ui/workroom/` pages are untouched; the preview lives in
 
 ## Operate (from repo root, no credentials needed)
 
+Full sequence, copy-paste as one block. It runs tests, regenerates both
+result files, wires `minrun.json` to the file the viewer reads
+(`ui/minrun/results.json`), emits the file:// preview, then serves:
+
 ```bash
-python3 -m unittest discover -s tests -v   # 15/15 existing + new gate tests
-python3 runtime/run_min.py --brief briefs/brief-v1.json \
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python runtime/run_min.py --brief briefs/brief-v1.json \
+  --obs fixtures/minrun/observations.json --out outputs/minrun.json
+.venv/bin/python runtime/run_min.py --no-brief \
+  --obs fixtures/minrun/observations.json --out outputs/minrun-nobrief.json
+cp outputs/minrun.json ui/minrun/results.json
+.venv/bin/python runtime/run_min.py --brief briefs/brief-v1.json \
   --obs fixtures/minrun/observations.json --out outputs/minrun.json \
   --emit-preview ui/minrun/preview.html
-python3 runtime/run_min.py --no-brief \
-  --obs fixtures/minrun/observations.json --out outputs/minrun-nobrief.json
-python3 -m http.server 8123   # then open ui/minrun/results.html with
-                              # outputs/minrun.json copied next to it as results.json,
-                              # or just open ui/minrun/preview.html directly
+.venv/bin/python -c "import json; print(json.load(open('outputs/minrun.json'))['summary'])"
+python3 -m http.server 8123
 ```
+
+Then open (served, so `fetch("results.json")` works):
+- `http://localhost:8123/ui/minrun/results.html` (reads同目錄 `results.json`)
+- or open `ui/minrun/preview.html` directly over file:// (counts inlined).
+
+`outputs/*.json`, `ui/minrun/results.json`, `ui/minrun/preview.html`
+are git-ignored local artifacts; they stay on disk for acceptance and
+are never committed. Only `ui/minrun/results.html` (the viewer source)
+is tracked.
 
 ## Expected model calls
 
