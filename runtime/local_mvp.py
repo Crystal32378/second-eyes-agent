@@ -37,6 +37,14 @@ from runtime.brief_gate import (BUCKET_REMAINING, BUCKET_REVIEW,  # noqa: E402
 from runtime.signals import validate_signals  # noqa: E402
 from runtime.smallset import check_sealed_binding, verify_manifest  # noqa: E402
 
+# Evidence comes from a TRACKED, public-safe replay of the sealed receipt,
+# so a clean clone can re-derive every published number. The replay file is
+# SHA-locked here; it carries the original receipt's SHA as its lineage
+# anchor, and that original SHA is what results report as sealed_sha256.
+# The full receipt lives under outputs/ (git-ignored); when it happens to be
+# present, the replay is cross-checked against it — see check_replay_source.
+REPLAY_PATH = ROOT / "fixtures/smallset/sealed-public.json"
+REPLAY_SHA256 = ("6505e8b1f55f12aa569c4d48f2f735ea4acb796587902f580f6ea2e8767e53e3")
 SEALED_PATH = ROOT / "outputs/smallset-gate_20260912T094617Z.json"
 SEALED_SHA256 = ("15536244669f8e2b6b76f8df5a3e03dc2f2cf4f45e870716c5a759e5b3fca709")
 MANIFEST_PATH = ROOT / "fixtures/smallset/manifest.json"
@@ -64,14 +72,45 @@ def compute_coverage(brief: dict, items: list) -> dict:
     return {"slots": slots}
 
 
+def load_evidence() -> tuple[dict | None, str | None]:
+    """Read the tracked replay input; cross-check the receipt if present.
+
+    Clean-clone rule: everything needed to recompute is tracked. The replay
+    file is SHA-locked, and it must declare the sealed receipt it came from.
+    When the original receipt happens to exist locally, the replay must be
+    exactly what that receipt derives — so a doctored replay cannot survive
+    on a machine that still holds the original.
+    """
+    if not REPLAY_PATH.is_file():
+        return None, "replay input not found at {}".format(
+            REPLAY_PATH.relative_to(ROOT))
+    replay_bytes = REPLAY_PATH.read_bytes()
+    if hashlib.sha256(replay_bytes).hexdigest() != REPLAY_SHA256:
+        return None, "replay input SHA mismatch — refusing to proceed"
+    replay = json.loads(replay_bytes.decode("utf-8"))
+    declared = (replay.get("replay_of") or {}).get("sha256")
+    if declared != SEALED_SHA256:
+        return None, ("replay input declares receipt {!r}, expected "
+                      "{!r}".format(declared, SEALED_SHA256))
+    if SEALED_PATH.is_file():
+        receipt_bytes = SEALED_PATH.read_bytes()
+        if hashlib.sha256(receipt_bytes).hexdigest() != SEALED_SHA256:
+            return None, "local sealed receipt SHA mismatch"
+        from tools.make_replay_input import derive
+        try:
+            if derive(receipt_bytes)["text"] != replay_bytes.decode("utf-8"):
+                return None, ("replay input is not what the local sealed "
+                              "receipt derives")
+        except SystemExit as e:
+            return None, "replay derivation failed: {}".format(e)
+    return replay, None
+
+
 def run() -> tuple[dict | None, str | None]:
     """Returns (results_doc, error). Pure orchestration, no model calls."""
-    sealed_bytes = SEALED_PATH.read_bytes() if SEALED_PATH.is_file() else None
-    if sealed_bytes is None:
-        return None, "sealed results file not found"
-    if hashlib.sha256(sealed_bytes).hexdigest() != SEALED_SHA256:
-        return None, "sealed results SHA mismatch — refusing to proceed"
-    sealed = json.loads(sealed_bytes.decode("utf-8"))
+    sealed, error = load_evidence()
+    if error:
+        return None, error
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     report = verify_manifest(manifest, ROOT)
@@ -153,6 +192,7 @@ def run() -> tuple[dict | None, str | None]:
 
 
 def emit_preview(results: dict, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
     s = results["summary"]
     cov = " · ".join("{}:{} {}".format(c["slot"], c["scene"], c["status"])
                      for c in results["coverage"]["slots"])

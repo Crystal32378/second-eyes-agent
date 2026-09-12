@@ -56,9 +56,55 @@ class TestLocalMVP(unittest.TestCase):
         for i in self.results["items"]:
             self.assertEqual(i["model"], "gemini-2.5-flash")
             self.assertEqual(i["prompt_version"], "syn-obs-v1")
-            self.assertTrue(i["raw"])
             self.assertIsNotNone(i["manifest"])
             self.assertIn("signals_used", i)
+
+    def test_replay_input_is_tracked_and_public_safe(self):
+        """Clean-clone rule: the evidence the MVP reads is in the repo."""
+        import subprocess
+        from runtime.local_mvp import REPLAY_PATH, REPLAY_SHA256, SEALED_SHA256
+        self.assertTrue(REPLAY_PATH.is_file(),
+                        "replay input missing — a clean clone cannot run")
+        if (ROOT / ".git").exists():
+            tracked = subprocess.run(
+                ["git", "ls-files", "--error-unmatch",
+                 str(REPLAY_PATH.relative_to(ROOT))],
+                cwd=ROOT, capture_output=True)
+            self.assertEqual(tracked.returncode, 0,
+                             "replay input is not tracked by git")
+        # In an exported tree there is no .git; the file being here at all
+        # is the proof, since only tracked files survive `git archive`.
+        raw = REPLAY_PATH.read_bytes()
+        import hashlib
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), REPLAY_SHA256)
+        doc = json.loads(raw.decode("utf-8"))
+        self.assertEqual(doc["replay_of"]["sha256"], SEALED_SHA256)
+        # Raw model text, usage and stop reasons never enter the repo, and
+        # the downstream verdict is recomputed, never replayed.
+        for item in doc["items"]:
+            for banned in ("raw", "usage", "stop_reason", "verdict",
+                           "bucket", "reason", "pending", "resolver"):
+                self.assertNotIn(banned, item, banned)
+        text = raw.decode("utf-8").lower()
+        for marker in ("/users/", "/home/", "akia", "begin private", ".pem"):
+            self.assertNotIn(marker, text, marker)
+
+    def test_replay_matches_receipt_when_receipt_present(self):
+        """On this machine the original receipt is still here: prove the
+        tracked replay is exactly what it derives."""
+        from runtime.local_mvp import REPLAY_PATH, SEALED_PATH
+        if not SEALED_PATH.is_file():
+            self.skipTest("sealed receipt not present (clean clone)")
+        from tools.make_replay_input import derive
+        self.assertEqual(derive(SEALED_PATH.read_bytes())["text"],
+                         REPLAY_PATH.read_text(encoding="utf-8"))
+
+    def test_no_raw_model_text_under_replay(self):
+        """Replay carries no raw text; nothing downstream may invent one."""
+        for i in self.results["items"]:
+            self.assertIsNone(i["raw"])
+            self.assertIsNone(i["usage"])
+            self.assertIsNone(i["stop_reason"])
 
     def test_coverage_computed(self):
         cov = {c["slot"]: c for c in self.results["coverage"]["slots"]}
