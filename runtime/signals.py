@@ -32,8 +32,14 @@ def validate_signals(doc: dict, asset_keys: list) -> dict:
         if not isinstance(entry, dict):
             errors.append("{}: entry must be an object".format(key))
             continue
-        signals = entry.get("signals") or {}
-        sources = entry.get("signal_sources") or {}
+        signals = entry.get("signals")
+        sources = entry.get("signal_sources")
+        if not isinstance(signals, dict):
+            errors.append("{}: signals must be an object".format(key))
+            continue
+        if not isinstance(sources, dict):
+            errors.append("{}: signal_sources must be an object".format(key))
+            continue
         for s in signals:
             if s not in ALLOWED_KEYS:
                 errors.append("{}: forbidden signal key: {}".format(key, s))

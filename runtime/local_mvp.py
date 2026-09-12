@@ -35,7 +35,7 @@ from agent.loop import route  # noqa: E402
 from runtime.brief_gate import (BUCKET_REMAINING, BUCKET_REVIEW,  # noqa: E402
                                 BUCKET_SHORTLIST, gate)
 from runtime.signals import validate_signals  # noqa: E402
-from runtime.smallset import verify_manifest  # noqa: E402
+from runtime.smallset import check_sealed_binding, verify_manifest  # noqa: E402
 
 SEALED_PATH = ROOT / "outputs/smallset-gate_20260912T094617Z.json"
 SEALED_SHA256 = ("15536244669f8e2b6b76f8df5a3e03dc2f2cf4f45e870716c5a759e5b3fca709")
@@ -78,6 +78,10 @@ def run() -> tuple[dict | None, str | None]:
     if not report["ok"]:
         return None, "manifest: " + "; ".join(report["errors"])
     brief = json.loads((ROOT / manifest["brief"]).read_text(encoding="utf-8"))
+
+    sealed_binding = check_sealed_binding(manifest, sealed["items"])
+    if not sealed_binding["ok"]:
+        return None, "sealed binding: " + "; ".join(sealed_binding["errors"])
 
     sealed_keys = [i["asset_key"] for i in sealed["items"]]
     sig_doc = json.loads(SIGNALS_PATH.read_text(encoding="utf-8"))
@@ -131,6 +135,10 @@ def run() -> tuple[dict | None, str | None]:
         BUCKET_REMAINING: sum(1 for i in items if i["bucket"] == BUCKET_REMAINING),
         "total": len(items),
         "stubbed": sum(1 for i in items if i.get("stubbed")),
+        # Final-gate rule: a stubbed Shortlist must not feed the public
+        # workroom or any deployment. Machine-readable stop flag.
+        "public_ready": not any(i["bucket"] == BUCKET_SHORTLIST
+                                and i.get("stubbed") for i in items),
     }
     return {
         "brief_id": brief.get("brief_id"),

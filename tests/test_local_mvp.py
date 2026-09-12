@@ -79,6 +79,11 @@ class TestLocalMVP(unittest.TestCase):
         self.assertIn("STUB", html_text)
         self.assertNotIn("18", html_text)
 
+    def test_public_ready_false_with_stubbed_shortlist(self):
+        # Stub ruling: a stubbed:true Shortlist must not feed the public
+        # workroom or any deployment. Machine-readable stop flag.
+        self.assertFalse(self.results["summary"]["public_ready"])
+
 
 if __name__ == "__main__":
     unittest.main()

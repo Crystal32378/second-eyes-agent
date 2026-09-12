@@ -39,3 +39,17 @@ before any real use. Items decided on consulted stub signals carry
 `stubbed:true` and a STUB badge in both viewers. has_people cites
 `docs/demo-derivatives.md` where stated; unknown stays null and stops
 at Needs Review instead of guessing.
+
+## Final-gate blockers (Fu ruling, enforced in results)
+
+- Any `stubbed:true` Shortlist sets `summary.public_ready: false`.
+  Such output must NOT feed the public workroom and must NOT be
+  deployed. Before the final gate, either replace stubs with
+  editor-verified facts or keep the whole batch clearly marked
+  LOCAL/STUB.
+- `check_sealed_binding` pins sealed evidence to the current manifest
+  per item (asset_key/path/sha256/ref_convention + old expansion).
+  A same-key file swap that `verify_manifest` alone would accept is
+  rejected here with exit 2 and zero output.
+- UI visual acceptance remains BLOCKED: HTML string tests verify
+  wiring only, never visual correctness.

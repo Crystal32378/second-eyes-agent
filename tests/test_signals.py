@@ -52,6 +52,24 @@ class TestValidateSignals(unittest.TestCase):
         self.assertTrue(any("not in sealed results" in e
                             for e in rep["errors"]))
 
+    def test_signals_list_rejected_without_crash(self):
+        doc = {"signals": {
+            k: ({"signals": ["has_people"], "signal_sources": {}}
+                if k == "IG-262" else entry({}, {})) for k in KEYS}}
+        rep = validate_signals(doc, KEYS)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("signals must be an object" in e
+                            for e in rep["errors"]))
+
+    def test_sources_string_rejected_without_crash(self):
+        doc = {"signals": {
+            k: ({"signals": {}, "signal_sources": "docs/x.md"}
+                if k == "IG-262" else entry({}, {})) for k in KEYS}}
+        rep = validate_signals(doc, KEYS)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("signal_sources must be an object" in e
+                            for e in rep["errors"]))
+
 
 if __name__ == "__main__":
     unittest.main()
