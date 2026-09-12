@@ -8,3 +8,7 @@ __pycache__/
 *.key
 # fresh run outputs stay local until submission packaging decides otherwise
 outputs/*.jsonl
+outputs/*.json
+# generated min-run viewer data (source viewer ui/minrun/results.html stays tracked)
+ui/minrun/results.json
+ui/minrun/preview.html

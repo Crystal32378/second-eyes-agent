@@ -1,0 +1,236 @@
+"""Brief-gate + min-run pipeline tests — fixed data only, no model calls.
+
+Covers the four required scenarios (missing brief, missing evidence,
+explicit mismatch, new-photo match) and all evidence states reaching
+all three brief verdicts, including CLEAR + 證據不足 -> Needs Review.
+"""
+import json
+import unittest
+from pathlib import Path
+
+from agent.loop import route
+from runtime.brief_gate import gate
+from runtime.run_min import emit_preview, run
+
+ROOT = Path(__file__).resolve().parents[1]
+BRIEF = json.loads((ROOT / "briefs/brief-v1.json").read_text(encoding="utf-8"))
+OBS = json.loads((ROOT / "fixtures/minrun/observations.json").read_text(
+    encoding="utf-8"))["photos"]
+
+
+def photo(key):
+    return next(p for p in OBS if p["asset_key"] == key)
+
+
+def sourced(p, source="test:declared"):
+    """Declare an explicit source for every signal (custody gate input)."""
+    return {**p, "signal_sources": {s: source for s in p.get("signals", {})}}
+
+
+def gated(key, brief=BRIEF):
+    p = sourced(photo(key))
+    state = route({"observed": p.get("observed") or {},
+                   "old": p.get("old") or {}})
+    return gate({**p, "evidence_state": state}, brief), state
+
+
+class TestFourScenarios(unittest.TestCase):
+    def test_new_photo_match_shortlist(self):
+        r, state = gated("FIX-NEW-MATCH")
+        self.assertEqual(state, "NEW")
+        self.assertEqual((r["verdict"], r["bucket"]), ("符合", "Shortlist"))
+
+    def test_explicit_mismatch_remaining(self):
+        r, state = gated("FIX-CLEAR-MISMATCH")
+        self.assertEqual(state, "CLEAR")
+        self.assertEqual((r["verdict"], r["bucket"]), ("明確不符", "Remaining"))
+
+    def test_missing_evidence_needs_review(self):
+        r, state = gated("FIX-UNKNOWN-EMPTY")
+        self.assertEqual(state, "UNKNOWN")
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+
+    def test_missing_brief_needs_review(self):
+        r, state = gated("FIX-NEW-MATCH", brief=None)
+        self.assertEqual(r["bucket"], "Needs Review")
+        self.assertIn("brief", r["reason"])
+
+
+class TestVerdictCoverage(unittest.TestCase):
+    def test_clear_insufficient_needs_review(self):
+        # Required case: CLEAR must still be able to land in Needs Review.
+        r, state = gated("FIX-CLEAR-INSUFFICIENT")
+        self.assertEqual(state, "CLEAR")
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+
+    def test_conflict_needs_review(self):
+        r, state = gated("FIX-CONFLICT-RELEVANT")
+        self.assertEqual(state, "CONFLICT")
+        self.assertEqual(r["bucket"], "Needs Review")
+
+    def test_constraint_mismatch_remaining(self):
+        r, state = gated("FIX-NEW-PEOPLE-MISMATCH")
+        self.assertEqual(state, "NEW")
+        self.assertEqual((r["verdict"], r["bucket"]), ("明確不符", "Remaining"))
+
+    def test_resolver_defaults_unassigned(self):
+        # brief-v1 only defines resolvers.scene; constraint/evidence keys
+        # must fall back to 未指定, never guessed.
+        r, _ = gated("FIX-NEW-PEOPLE-MISMATCH")
+        self.assertEqual(r["resolver"], "未指定")
+        r2, _ = gated("FIX-CLEAR-INSUFFICIENT")
+        self.assertEqual(r2["resolver"], "未指定")
+        r3, _ = gated("FIX-NEW-MATCH")
+        self.assertEqual(r3["resolver"], "編輯")
+
+
+class TestPipelineCounts(unittest.TestCase):
+    def test_summary_generated_not_hardcoded(self):
+        results = run(BRIEF, OBS)
+        s = results["summary"]
+        self.assertEqual(s["total"], len(OBS))
+        self.assertEqual(s["Shortlist"] + s["Needs Review"] + s["Remaining"],
+                         s["total"])
+        self.assertNotEqual((s["Shortlist"], s["Needs Review"], s["Remaining"]),
+                            (18, 7, 375))
+        self.assertEqual(results["model_calls"], 0)
+
+    def test_preview_inlines_computed_counts(self):
+        results = run(BRIEF, OBS)
+        dest = ROOT / "outputs" / "test-preview.html"
+        try:
+            emit_preview(results, dest)
+            text = dest.read_text(encoding="utf-8")
+            s = results["summary"]
+            self.assertIn("Shortlist {}".format(s["Shortlist"]), text)
+            self.assertIn("Needs Review {}".format(s["Needs Review"]), text)
+            self.assertIn("Remaining {}".format(s["Remaining"]), text)
+            self.assertNotIn("18", text.split("Total")[0][-80:] if "Total" in text else "")
+        finally:
+            if dest.exists():
+                dest.unlink()
+
+
+class TestPeopleSignalTriState(unittest.TestCase):
+    """Fu regression: has_people missing/null must stop, non-boolean
+    is a data error. Neither may pass the no_people gate."""
+
+    def _photo(self, has_people):
+        signals = {"scene_claim": "product", "long_edge": 1400,
+                   "channel": "instagram", "sku": "NUDE-01"}
+        if has_people != "ABSENT":
+            signals["has_people"] = has_people
+        return {
+            "asset_key": "REG-PEOPLE",
+            "observed": {
+                "colour": {"value": "beige", "ref": "test:frame-full"},
+                "item": {"value": "bra", "ref": "test:frame-full"},
+            },
+            "old": {"colour": "beige", "item": "bra"},
+            "signals": signals,
+        }
+
+    def _gate(self, photo):
+        photo = sourced(photo)
+        state = route({"observed": photo["observed"], "old": photo["old"]})
+        self.assertEqual(state, "CLEAR")
+        return gate({**photo, "evidence_state": state}, BRIEF)
+
+    def test_missing_key_stops(self):
+        r = self._gate(self._photo("ABSENT"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+        self.assertIn("人物訊號", r["reason"])
+
+    def test_null_stops(self):
+        r = self._gate(self._photo(None))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+
+    def test_non_boolean_is_data_error(self):
+        for bad in ("yes", 1, ["no"]):
+            r = self._gate(self._photo(bad))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("資料錯誤", r["reason"])
+
+
+class TestSignalSources(unittest.TestCase):
+    """Custody: a consulted signal without a real source stops at
+    Needs Review — never Shortlist. Missing key, empty string, and
+    未指定 all count as sourceless."""
+
+    def _match_photo(self, sources):
+        p = sourced(photo("FIX-NEW-MATCH"))
+        if sources == "ABSENT":
+            p = {k: v for k, v in p.items() if k != "signal_sources"}
+        elif sources != "DECLARED":
+            p["signal_sources"] = sources
+        return p
+
+    def _gate(self, p):
+        state = route({"observed": p["observed"], "old": p["old"]})
+        self.assertEqual(state, "NEW")
+        return gate({**p, "evidence_state": state}, BRIEF)
+
+    def test_declared_sources_shortlist(self):
+        r = self._gate(self._match_photo("DECLARED"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("符合", "Shortlist"))
+
+    def test_absent_sources_key_stops(self):
+        r = self._gate(self._match_photo("ABSENT"))
+        self.assertEqual((r["verdict"], r["bucket"]), ("證據不足", "Needs Review"))
+        self.assertIn("訊號來源", r["reason"])
+
+    def test_empty_and_unresolved_sources_stop(self):
+        base = {s: "test:declared"
+                for s in photo("FIX-NEW-MATCH")["signals"]}
+        for bad in ("", "未指定"):
+            srcs = dict(base, long_edge=bad)
+            r = self._gate(self._match_photo(srcs))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("long_edge", r["reason"])
+
+    def test_nonstring_and_blank_sources_stop(self):
+        # Whitespace, lists, dicts, numbers are all sourceless.
+        base = {s: "test:declared"
+                for s in photo("FIX-NEW-MATCH")["signals"]}
+        for bad in ("   ", "\t", ["test:declared"], {"s": 1}, 42):
+            srcs = dict(base, long_edge=bad)
+            r = self._gate(self._match_photo(srcs))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("long_edge", r["reason"])
+
+    def test_manifest_passthrough(self):
+        p = self._match_photo("DECLARED")
+        p["manifest"] = {"path": "ui/workroom/assets/X.jpg",
+                         "sha256": "0" * 64,
+                         "ref_convention": "workroom:frame-full"}
+        r = self._gate(p)
+        self.assertEqual(r["manifest"]["path"], "ui/workroom/assets/X.jpg")
+
+
+class TestTraceability(unittest.TestCase):
+    def test_results_keep_refs_sources_and_fixture_flag(self):
+        results = run(BRIEF, OBS, fixture=True)
+        self.assertTrue(results["fixture"])
+        first = next(i for i in results["items"]
+                     if i["asset_key"] == "FIX-NEW-MATCH")
+        self.assertEqual(first["observed"]["colour"]["ref"], "test:frame-full")
+        self.assertTrue(all(v == "fixture:staged"
+                            for v in first["signal_sources"].values()))
+        self.assertTrue(first["fixture"])
+
+    def test_preview_shows_refs_and_sources(self):
+        results = run(BRIEF, OBS, fixture=True)
+        dest = ROOT / "outputs" / "test-preview.html"
+        try:
+            emit_preview(results, dest)
+            text = dest.read_text(encoding="utf-8")
+            self.assertIn("test:frame-full", text)
+            self.assertIn("fixture:staged", text)
+            self.assertIn("FIXTURE", text)
+        finally:
+            if dest.exists():
+                dest.unlink()
+
+
+if __name__ == "__main__":
+    unittest.main()

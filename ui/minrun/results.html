@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Second Eyes — min-run results (counts from file, not 18/7/375)</title>
+<link rel="stylesheet" href="../workroom/styles.css">
+</head>
+<body>
+<div class="preview-bar"><span>MIN-RUN · 結果驅動預覽 · 與公開 workroom 分離</span></div>
+<div class="page">
+<h1>Min-run results</h1>
+<p id="summary">載入中…（請用 <code>python3 -m http.server</code> served 後開啟，並把管線輸出的 JSON 存為同目錄 <code>results.json</code>）</p>
+<ul id="cards"></ul>
+<p><small>公開站 <code>ui/workroom/</code> 維持原版，此頁只讀同目錄 results.json。</small></p>
+</div>
+<script>
+fetch("results.json").then(r => r.json()).then(d => {
+  const s = d.summary;
+  document.getElementById("summary").textContent =
+    `Shortlist ${s["Shortlist"]} · Needs Review ${s["Needs Review"]} · Remaining ${s["Remaining"]} · Total ${s.total}（brief: ${d.brief_id}，model calls: ${d.model_calls}）`;
+  const ul = document.getElementById("cards");
+  d.items.forEach(it => {
+    const li = document.createElement("li");
+    li.innerHTML = `<strong></strong> <span></span><br><small></small><br><small class="trace"></small>`;
+    li.querySelector("strong").textContent = it.asset_key + (it.fixture ? " · FIXTURE" : "");
+    li.querySelector("span").textContent = `${it.evidence_state} / ${it.verdict} → ${it.bucket}`;
+    li.querySelector("small").textContent =
+      `${it.reason} · 待辦：${it.pending.join("; ") || "—"} · 解決人：${it.resolver}`;
+    const refs = Object.entries(it.observed || {}).filter(([k, v]) => v)
+      .map(([k, v]) => `${k}=${v.value} [${v.ref}]`).join(", ") || "—";
+    const olds = Object.entries(it.old || {}).filter(([k, v]) => v)
+      .map(([k, v]) => `${k}:${v}`).join(", ") || "—";
+    const srcs = Object.entries(it.signal_sources || {})
+      .map(([k, v]) => `${k}←${v}`).join(", ") || "—";
+    li.querySelector(".trace").textContent = `觀察：${refs} · 舊標籤：${olds} · 訊號來源：${srcs}` +
+      (it.manifest ? ` · 檔：${it.manifest.path} [${(it.manifest.sha256 || "").slice(0, 12)}]` : "");
+    ul.appendChild(li);
+  });
+}).catch(() => {
+  document.getElementById("summary").textContent =
+    "找不到同目錄 results.json：先跑管線產生後再用 http.serve 預覽（見 docs/minrun.md）。";
+});
+</script>
+</body>
+</html>

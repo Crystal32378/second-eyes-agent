@@ -1,0 +1,15 @@
+{
+  "comment": "Approved small set for the FUTURE gated model test (next gate, NOT run on this branch). All files are existing public derivatives under ui/workroom/assets. No pixels added.",
+  "brief": "briefs/brief-v1.json",
+  "ref_convention": "workroom:frame-full",
+  "model_calls_expected": 6,
+  "note": "1 call per image (fresh agent per photo) + 0 video. A text-only connectivity check would add 1 extra call if the gate requires it.",
+  "photos": [
+    {"asset_key": "BACK-5F20", "path": "ui/workroom/assets/BACK-5F20.jpg", "sha256": "0f0b8a254479eed0f1c2a902db9a97137300a86ab33cde2c5209e5373f7992bc", "old_label": "none"},
+    {"asset_key": "IG-262", "path": "ui/workroom/assets/IG-262.jpg", "sha256": "074fda082161804fcce6f88660af17af61325c7d1442bf758b3d9e79f76f2c5a", "old_label": "none"},
+    {"asset_key": "IG-277", "path": "ui/workroom/assets/IG-277.jpg", "sha256": "2210d695c6b43059c4a6b614fb793e61442f0854da183f0eaafc0a065452f004", "old_label": "none"},
+    {"asset_key": "IMG-4489", "path": "ui/workroom/assets/IMG-4489.jpg", "sha256": "cf59ada94da7e97df25720b9129f16ebcc9c2b1875abc0fd2a8623abffffe6d6", "old_label": "none"},
+    {"asset_key": "ROBE-5059", "path": "ui/workroom/assets/ROBE-5059.jpg", "sha256": "d3aeced9c128cf92088c555abd0a1f08b5b4db53fbc9c402538803122e95e196", "old_label": "none"},
+    {"asset_key": "WEAR-8106", "path": "ui/workroom/assets/WEAR-8106.jpg", "sha256": "5e6bebf02797053c106a101cf19854dd43fe74904abdaff1bd1ad59a131a1d91", "old_label": "none"}
+  ]
+}

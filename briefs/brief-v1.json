@@ -1,0 +1,19 @@
+{
+  "brief_id": "brief-v1",
+  "required_scenes": [
+    {"slot": "hero", "scene": "product"},
+    {"slot": "detail", "scene": "detail"}
+  ],
+  "hard_constraints": {
+    "no_people": true,
+    "min_long_edge": 1000,
+    "allowed_channels": ["instagram"]
+  },
+  "supplied_facts": {
+    "live_skus": ["NUDE-01"]
+  },
+  "relevant_fields": ["colour", "item", "shot"],
+  "resolvers": {
+    "scene": "編輯"
+  }
+}
