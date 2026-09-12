@@ -1,5 +1,7 @@
 # Second Eyes — Architecture (as implemented)
 
+![Architecture diagram](architecture.png)
+
 > Read this diagram with the legend. Dashed nodes are **presentation-only**:
 > they appear in the static Publishing Workroom mock and in copy, but no
 > runtime connection exists. Solid nodes are implemented and tested.
