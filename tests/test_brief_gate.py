@@ -188,6 +188,16 @@ class TestSignalSources(unittest.TestCase):
             self.assertEqual(r["bucket"], "Needs Review")
             self.assertIn("long_edge", r["reason"])
 
+    def test_nonstring_and_blank_sources_stop(self):
+        # Whitespace, lists, dicts, numbers are all sourceless.
+        base = {s: "test:declared"
+                for s in photo("FIX-NEW-MATCH")["signals"]}
+        for bad in ("   ", "\t", ["test:declared"], {"s": 1}, 42):
+            srcs = dict(base, long_edge=bad)
+            r = self._gate(self._match_photo(srcs))
+            self.assertEqual(r["bucket"], "Needs Review")
+            self.assertIn("long_edge", r["reason"])
+
     def test_manifest_passthrough(self):
         p = self._match_photo("DECLARED")
         p["manifest"] = {"path": "ui/workroom/assets/X.jpg",

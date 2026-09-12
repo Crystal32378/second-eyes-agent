@@ -1,11 +1,14 @@
 """Small-set manifest verification tests — temp files only, no model calls."""
 import hashlib
 import json
+import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from runtime.smallset import check_binding, verify_manifest
+from runtime.smallset import apply_manifest, check_binding, verify_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -133,6 +136,84 @@ class TestBinding(unittest.TestCase):
                             False)
         self.assertFalse(rep["ok"])
         self.assertTrue(any("convention" in e for e in rep["errors"]))
+
+    def test_ref_suffix_spoof_rejected(self):
+        # Exact equality: convention + "-evil" must NOT pass.
+        m = tiny_manifest(["A"])
+        rep = check_binding(
+            m, [tiny_photo("A", ref="workroom:frame-full-evil")], False)
+        self.assertFalse(rep["ok"])
+        self.assertTrue(any("convention" in e for e in rep["errors"]))
+
+
+CONVENTION = "workroom:frame-full"
+BRIEF_V1 = json.loads((ROOT / "briefs/brief-v1.json").read_text(
+    encoding="utf-8"))
+GOOD_SIGNALS = {"scene_claim": "product", "has_people": False,
+                "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+
+
+def round3_setup(d, old_label="beige"):
+    """Temp manifest + one real byte file. Paths are absolute so
+    verify_manifest resolves them regardless of repo root."""
+    asset = Path(d) / "a.jpg"
+    asset.write_bytes(b"round3-bytes")
+    sha = hashlib.sha256(b"round3-bytes").hexdigest()
+    manifest = {"brief": "briefs/brief-v1.json",
+                "ref_convention": CONVENTION,
+                "photos": [{"asset_key": "R3-01", "path": str(asset),
+                            "sha256": sha, "old_label": old_label}]}
+    return manifest
+
+
+def round3_photo(old, ref=CONVENTION):
+    return {"asset_key": "R3-01",
+            "observed": {"colour": {"value": "beige", "ref": ref},
+                         "item": {"value": "bra", "ref": ref}},
+            "old": old,
+            "signals": dict(GOOD_SIGNALS),
+            "signal_sources": {s: "test:declared" for s in GOOD_SIGNALS}}
+
+
+class TestCustodyRound3(unittest.TestCase):
+    def test_old_label_swap_neutralized(self):
+        # Observations smuggle old "red dress" (would route CONFLICT);
+        # manifest injects "beige", so routing follows the manifest.
+        from runtime.run_min import run
+        with tempfile.TemporaryDirectory() as d:
+            manifest = round3_setup(d, old_label="beige")
+            smuggled = round3_photo(old={"colour": "red dress",
+                                         "item": "red",
+                                         "shot": "red"})
+            bound = apply_manifest(manifest, [smuggled])
+            self.assertEqual(bound[0]["old"],
+                             {"colour": "beige",
+                              "item": "beige",
+                              "shot": "beige"})
+            results = run(BRIEF_V1, bound, fixture=False)
+            item = results["items"][0]
+            self.assertEqual(item["evidence_state"], "CLEAR")
+            self.assertEqual(item["bucket"], "Shortlist")
+
+    def test_brief_swap_aborts(self):
+        from runtime.run_min import main
+        with tempfile.TemporaryDirectory() as d:
+            manifest = round3_setup(d)
+            obs = {"fixture": False,
+                   "photos": [round3_photo(old={"colour": "x"})]}
+            manifest_path = os.path.join(d, "manifest.json")
+            obs_path = os.path.join(d, "obs.json")
+            out_path = os.path.join(d, "out.json")
+            Path(manifest_path).write_text(json.dumps(manifest),
+                                           encoding="utf-8")
+            Path(obs_path).write_text(json.dumps(obs), encoding="utf-8")
+            argv = ["run_min.py", "--brief", "briefs/other.json",
+                    "--manifest", manifest_path, "--obs", obs_path,
+                    "--out", out_path]
+            with patch.object(sys, "argv", argv):
+                rc = main()
+            self.assertEqual(rc, 2)
+            self.assertFalse(os.path.exists(out_path))
 
 
 if __name__ == "__main__":

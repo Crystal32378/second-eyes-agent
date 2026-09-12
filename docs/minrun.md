@@ -51,10 +51,17 @@ is tracked.
   `--manifest`): manifest asset_keys and observation asset_keys must
   match exactly with equal counts — missing, extra, or duplicate keys
   abort with exit 2 and nothing is written. `fixture:true`
-  observations are rejected in real mode. Every attached observation
-  ref must start with the manifest's `ref_convention`; each result
-  keeps its manifest `{path, sha256, ref_convention}`. Both viewers
-  render it.
+  observations are rejected in real mode. `old` is never taken from
+  observations in manifest mode: it is mechanically injected from each
+  entry's `old_label`, so a smuggled old label cannot change routing.
+  The CLI `--brief` must equal the manifest's `brief` pointer or the
+  run stops. Every attached observation ref must EQUAL the manifest's
+  `ref_convention` (exact match, no prefix tricks). Each result keeps
+  its manifest `{path, sha256, ref_convention}` plus the injected
+  `old`. Both viewers render them.
+- Consulted signals need strict sources: only a stripped non-empty
+  string counts (whitespace, lists, dicts, numbers, and 未指定 are
+  sourceless) — otherwise Needs Review, never Shortlist.
 
 ## Expected model calls
 

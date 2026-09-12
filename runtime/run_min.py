@@ -82,13 +82,16 @@ def emit_preview(results: dict, dest: Path) -> None:
             "{}={} [{}]".format(f, (v or {}).get("value"),
                                 (v or {}).get("ref"))
             for f, v in (it.get("observed") or {}).items() if v)
+        olds = ", ".join(
+            "{}:{}".format(f, v) for f, v in (it.get("old") or {}).items()
+            if v)
         srcs = ", ".join(
             "{}←{}".format(k, v)
             for k, v in (it.get("signal_sources") or {}).items())
         cards.append(
             "<li><strong>{key}</strong> · {ev} / {ver} → {bucket}<br>"
             "<small>{reason} · 待辦：{pend} · 解決人：{res}<br>"
-            "觀察：{refs} · 訊號來源：{srcs}{fix}{mani}</small></li>".format(
+            "觀察：{refs} · 舊標籤：{olds} · 訊號來源：{srcs}{fix}{mani}</small></li>".format(
                 key=html.escape(it["asset_key"]),
                 ev=html.escape(it["evidence_state"]),
                 ver=html.escape(it["verdict"]),
@@ -97,6 +100,7 @@ def emit_preview(results: dict, dest: Path) -> None:
                 pend=html.escape(pend),
                 res=html.escape(it["resolver"]),
                 refs=html.escape(refs or "—"),
+                olds=html.escape(olds or "—"),
                 srcs=html.escape(srcs or "—"),
                 fix=" · FIXTURE" if it.get("fixture") else "",
                 mani=(" · 檔：{} [{}]".format(
@@ -130,29 +134,38 @@ def main() -> int:
                              "before running; aborts on mismatch")
     args = parser.parse_args()
 
-    brief = None if args.no_brief else load_json(ROOT / args.brief)
+    brief = None
     obs_doc = load_json(ROOT / args.obs)
     photos = obs_doc["photos"]
     fixture = bool(obs_doc.get("fixture", False))
 
     if args.manifest:
-        from runtime.smallset import check_binding, verify_manifest
+        from runtime.smallset import (apply_manifest, check_binding,
+                                      verify_manifest)
         manifest = load_json(ROOT / args.manifest)
         report = verify_manifest(manifest, ROOT)
         binding = check_binding(manifest, photos, fixture)
         errors = report["errors"] + binding["errors"]
+        # CLI --brief must be the same repo-relative brief the manifest
+        # points at; a swapped brief stops here with nothing written.
+        manifest_brief = (manifest or {}).get("brief")
+        if args.no_brief:
+            errors.append("manifest mode requires --brief, got --no-brief")
+        elif not manifest_brief:
+            errors.append("manifest missing brief pointer")
+        elif args.brief != manifest_brief:
+            errors.append("brief mismatch: cli {!r} vs manifest {!r}".format(
+                args.brief, manifest_brief))
         if errors:
             print("MANIFEST FAILED:")
             for e in errors:
                 print(" -", e)
             return 2
         print("manifest ok:", args.manifest)
-        by_key = {p["asset_key"]: p for p in manifest["photos"]}
-        photos = [{**p, "manifest": {
-            "path": by_key[p["asset_key"]]["path"],
-            "sha256": by_key[p["asset_key"]]["sha256"],
-            "ref_convention": manifest["ref_convention"],
-        }} for p in photos]
+        photos = apply_manifest(manifest, photos)
+
+    if not args.no_brief:
+        brief = load_json(ROOT / args.brief)
 
     results = run(brief, photos, fixture=fixture)
 

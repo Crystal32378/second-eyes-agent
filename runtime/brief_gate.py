@@ -92,8 +92,11 @@ def gate(photo: dict, brief: dict | None) -> dict:
     used: list[str] = []
 
     def _sourced(name: str) -> bool:
+        # Only a stripped non-empty string counts. Whitespace, lists,
+        # dicts, numbers, and the 未指定 marker are all sourceless.
         src = sources.get(name)
-        return bool(src) and src != UNRESOLVED
+        return (isinstance(src, str) and bool(src.strip())
+                and src.strip() != UNRESOLVED)
 
     def out(verdict, bucket, reason, pending, resolver_key):
         # Custody: a consulted signal without source cannot decide.
@@ -112,6 +115,7 @@ def gate(photo: dict, brief: dict | None) -> dict:
                     "pending": ["補訊號來源"],
                     "resolver": _resolver(brief, "evidence"),
                     "observed": observed,
+                    "old": old,
                     "signals": signals,
                     "signal_sources": dict(sources),
                     "manifest": photo.get("manifest"),
@@ -128,6 +132,7 @@ def gate(photo: dict, brief: dict | None) -> dict:
             # (with their sources) that the brief verdict was based on,
             # so the viewer can show why a photo was bucketed.
             "observed": observed,
+            "old": old,
             "signals": signals,
             "signal_sources": dict(sources),
             "manifest": photo.get("manifest"),

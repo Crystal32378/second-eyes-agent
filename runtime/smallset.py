@@ -98,8 +98,34 @@ def check_binding(manifest: dict, photos: list, fixture: bool) -> dict:
             for field, sel in (p.get("observed") or {}).items():
                 if (isinstance(sel, dict) and sel.get("value")
                         and sel.get("ref")
-                        and not str(sel["ref"]).startswith(convention)):
+                        and str(sel["ref"]) != convention):
                     errors.append(
-                        "{}: ref {!r} does not match convention {!r}".format(
+                        "{}: ref {!r} != convention {!r}".format(
                             key, sel["ref"], convention))
     return {"ok": not errors, "errors": errors}
+
+
+def apply_manifest(manifest: dict, photos: list) -> list:
+    """Attach manifest custody to photos and mechanically inject old labels.
+
+    `old` is NEVER taken from observations in manifest mode: every photo's
+    old {colour,item,shot} is built from its manifest entry's old_label
+    (same convention as run_synthetic_gemini.py), so smuggling a different
+    old label cannot change CLEAR/CONFLICT/NEW routing. Call only after
+    check_binding passed (exact key match guaranteed).
+    """
+    by_key = {p["asset_key"]: p for p in manifest["photos"]}
+    out = []
+    for p in photos:
+        m = by_key[p["asset_key"]]
+        old_label = m.get("old_label")
+        out.append({**p,
+                    "old": {"colour": old_label,
+                            "item": old_label,
+                            "shot": old_label},
+                    "manifest": {
+                        "path": m["path"],
+                        "sha256": m["sha256"],
+                        "ref_convention": manifest["ref_convention"],
+                    }})
+    return out
