@@ -1,5 +1,5 @@
 {
-  "comment": "EDITOR-DECLARED publishing signals for the 6 smallset photos (local MVP wiring demo). has_people cites docs/demo-derivatives.md where the derivative manifest states it; scene/channel/sku assignments by the local editor are marked editor:mvp-stub and MUST be replaced by editor-verified facts before any real use. long_edge is NEVER declared here — the pipeline measures it from bytes. Items decided on stubbed signals carry stubbed:true in results.",
+  "comment": "EDITOR-DECLARED publishing signals for the 6 smallset photos (local MVP wiring demo). has_people cites docs/demo-derivatives.md where the derivative manifest states it, except ROBE-5059 whose four publishing facts were verified by owner Crystal on 2026-09-12. Other editor:mvp-stub values remain wiring placeholders and MUST be replaced by editor-verified facts before real use. long_edge is NEVER declared here — the pipeline measures it from bytes. Items decided on stubbed signals carry stubbed:true in results.",
   "signals": {
     "BACK-5F20": {
       "signals": {"scene_claim": "detail", "has_people": true, "channel": null, "sku": null},
@@ -18,8 +18,8 @@
       "signal_sources": {"has_people": "docs/demo-derivatives.md"}
     },
     "ROBE-5059": {
-      "signals": {"scene_claim": "detail", "has_people": false, "channel": "instagram", "sku": "NUDE-01"},
-      "signal_sources": {"scene_claim": "editor:mvp-stub", "has_people": "docs/demo-derivatives.md", "channel": "editor:mvp-stub", "sku": "editor:mvp-stub"}
+      "signals": {"scene_claim": "product", "has_people": false, "channel": "instagram", "sku": "NUDE-01"},
+      "signal_sources": {"scene_claim": "owner:Crystal:2026-09-12", "has_people": "owner:Crystal:2026-09-12", "channel": "owner:Crystal:2026-09-12", "sku": "owner:Crystal:2026-09-12"}
     },
     "WEAR-8106": {
       "signals": {"scene_claim": null, "has_people": true, "channel": null, "sku": null},

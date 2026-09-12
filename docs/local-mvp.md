@@ -33,6 +33,11 @@ must equal the receipt in `docs/model-gate.md`).
 
 ## Data honesty
 
+Decision record (2026-09-12): owner Crystal verified ROBE-5059 as
+`sku=NUDE-01`, `channel=instagram`, and `scene_claim=product`
+(product hanging shot), with `has_people=false`; source recorded as
+`owner:Crystal:2026-09-12` for all four facts.
+
 `signals.json` stub sources (`editor:mvp-stub`) are wiring placeholders
 for this local demo only and MUST be replaced by editor-verified facts
 before any real use. Items decided on consulted stub signals carry
