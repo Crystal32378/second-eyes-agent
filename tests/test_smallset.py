@@ -277,11 +277,12 @@ class TestSealedBinding(unittest.TestCase):
         self.assertTrue(any("duplicate" in e for e in rep["errors"]))
 
     def test_real_sealed_binds_current_manifest(self):
+        """Reads the TRACKED replay input so a clean clone can run this."""
         from runtime.smallset import check_sealed_binding
         manifest = json.loads((ROOT / "fixtures/smallset/manifest.json")
                               .read_text(encoding="utf-8"))
         sealed = json.loads(
-            (ROOT / "outputs/smallset-gate_20260912T094617Z.json")
+            (ROOT / "fixtures/smallset/sealed-public.json")
             .read_text(encoding="utf-8"))
         rep = check_sealed_binding(manifest, sealed["items"])
         self.assertTrue(rep["ok"], rep["errors"])

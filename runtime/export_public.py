@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -44,6 +45,10 @@ LOCAL_MVP = ROOT / "outputs/local-mvp.json"
 MANIFEST_PATH = ROOT / "fixtures/smallset/manifest.json"
 WORKROOM = ROOT / "ui/workroom"
 DEST = ROOT / "ui/runtime"
+
+# Seam: the commit phase goes through this name so a test can inject an
+# I/O failure mid-swap and prove the old bundle survives byte-for-byte.
+_rename = os.rename
 
 PUBLIC_ITEM_FIELDS = ("asset_key", "image", "evidence_state", "verdict",
                       "bucket", "reason", "pending", "observed",
@@ -285,26 +290,58 @@ def build(local: dict, manifest: dict, by_key: dict, stage: Path) -> int:
 
     (stage / "results.json").write_text(text, encoding="utf-8")
 
-    # Commit: index.html is authored, not generated, so it is preserved
-    # across the swap; every generated file comes from the staging dir.
+    # index.html is authored, not generated. Copy it into the staging dir so
+    # the staged directory is a COMPLETE bundle and the commit can be a
+    # single directory swap rather than a file-by-file copy.
     index_html = DEST / "index.html"
-    keep = index_html.read_bytes() if index_html.is_file() else None
-    DEST.mkdir(parents=True, exist_ok=True)
-    for name in ("results.json", "styles.css"):
-        shutil.copyfile(stage / name, DEST / name)
-    assets_dest = DEST / "assets"
-    assets_dest.mkdir(parents=True, exist_ok=True)
-    staged_assets = {f.name for f in (stage / "assets").iterdir()}
-    for f in sorted((stage / "assets").iterdir()):
-        shutil.copyfile(f, assets_dest / f.name)
-    for f in sorted(assets_dest.iterdir()):
-        if f.name not in staged_assets:
-            f.unlink()
-    if keep is not None and index_html.read_bytes() != keep:
-        return fail("viewer index.html was modified by the export")
+    if index_html.is_file():
+        shutil.copyfile(index_html, stage / "index.html")
+
+    rc = commit_bundle(stage, DEST)
+    if rc:
+        return rc
 
     print("exported {} items to {}".format(len(items), DEST / "results.json"))
     print("summary:", json.dumps(payload["summary"], ensure_ascii=False))
+    return 0
+
+
+def commit_bundle(stage: Path, dest: Path) -> int:
+    """Swap the staged bundle into place, or leave the old one untouched.
+
+    Two renames on one filesystem, never a file-by-file copy: the published
+    directory is either entirely the old bundle or entirely the new one, so
+    an I/O failure part-way through cannot leave a new results.json beside
+    an old stylesheet. If the second rename fails, the first is undone and
+    every byte of the old bundle is back where it was.
+    """
+    backup = dest.parent / (dest.name + ".backup-" + str(os.getpid()))
+    if backup.exists():
+        shutil.rmtree(backup, ignore_errors=True)
+    had_dest = dest.exists()
+    if had_dest:
+        try:
+            _rename(dest, backup)
+        except OSError as e:
+            return fail("commit: could not move the old bundle aside "
+                        "({}); nothing was changed".format(e))
+    try:
+        _rename(stage, dest)
+    except OSError as e:
+        if had_dest:
+            try:
+                _rename(backup, dest)
+            except OSError as restore_error:
+                return fail(
+                    "commit FAILED and rollback FAILED: the previous bundle "
+                    "is at {} ({}); original error: {}".format(
+                        backup, restore_error, e))
+            return fail("commit: could not move the new bundle into place "
+                        "({}); the previous bundle was restored "
+                        "unchanged".format(e))
+        return fail("commit: could not move the new bundle into place "
+                    "({}); no bundle was published".format(e))
+    shutil.rmtree(backup, ignore_errors=True)
     return 0
 
 

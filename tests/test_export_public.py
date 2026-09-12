@@ -108,7 +108,8 @@ class TestPublicExport(unittest.TestCase):
         for page in ("brief-established.html", "brief-missing.html"):
             text = (WORKROOM / page).read_text(encoding="utf-8")
             self.assertIn('href="../runtime/"', text)
-            self.assertIn("View verified 6-image runtime", text)
+            self.assertIn("View recorded 6-image run", text)
+            self.assertNotIn("verified 6-image runtime", text)
         self.assertIn('href="../workroom/brief-established.html"',
                       self.html)
         self.assertIn('fetch("results.json")', self.html)

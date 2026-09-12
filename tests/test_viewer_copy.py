@@ -61,6 +61,27 @@ class TestViewerCopy(unittest.TestCase):
         self.assertEqual((RUNTIME / "styles.css").read_bytes(),
                          (WORKROOM / "styles.css").read_bytes())
 
+    def test_gloss_is_display_only(self):
+        """Sealed tokens stay verbatim in JSON; English reading is on screen."""
+        import json
+        payload = json.loads(self.results)
+        values = [v["value"] for it in payload["items"]
+                  for v in (it["observed"] or {}).values() if v]
+        self.assertIn("藍", values, "sealed token was rewritten in the payload")
+        self.assertNotIn("blue [", self.results)
+        self.assertNotIn("[blue]", self.results)
+        # The gloss lives only in the viewer, and is labelled as verbatim.
+        self.assertIn("const GLOSS", self.html)
+        self.assertIn('"藍": "blue"', self.html)
+        self.assertIn("Observed (verbatim):", self.html)
+        self.assertIn("DISPLAY-ONLY", self.html)
+
+    def test_workroom_nav_matches_viewer_wording(self):
+        for page in ("brief-established.html", "brief-missing.html"):
+            text = (WORKROOM / page).read_text(encoding="utf-8")
+            self.assertIn("03 View recorded 6-image run", text)
+            self.assertNotIn("verified 6-image runtime", text)
+
     def test_mock_counts_still_separate(self):
         self.assertIn("18 / 7 / 375", self.html)
         self.assertIn("never combined", self.html)

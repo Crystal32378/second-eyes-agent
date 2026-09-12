@@ -10,9 +10,11 @@ ui/runtime/.
 """
 import hashlib
 import json
+import os
 import shutil
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "ui/runtime"
@@ -117,6 +119,109 @@ class TestExportLineage(unittest.TestCase):
             self.assertEqual(pub["bucket"], rec["bucket"], pub["asset_key"])
             self.assertEqual(pub["evidence_state"], rec["evidence_state"],
                              pub["asset_key"])
+
+
+class TestCommitAtomicity(unittest.TestCase):
+    """A commit-phase I/O failure must leave the OLD bundle byte-identical.
+
+    The interesting case is not a clean re-export of the same bytes: it is a
+    DIFFERENT old bundle on disk when the swap fails. So each test first
+    plants a legal-but-different previous bundle, then injects a failure at
+    the exact step being tested, and asserts every planted byte is still
+    there afterwards.
+    """
+
+    def setUp(self):
+        from runtime import export_public
+        self.mod = export_public
+        self.assertTrue(LOCAL_MVP.is_file(), "run runtime/local_mvp.py first")
+        self.assertEqual(self.mod.main(), 0)
+        self.real = snapshot(RUNTIME)
+
+    def tearDown(self):
+        self.mod.main()
+        self.assertEqual(snapshot(RUNTIME), self.real)
+
+    def plant_old_bundle(self):
+        """Make the published bundle differ from what the export produces."""
+        marker = (RUNTIME / "results.json")
+        doc = json.loads(marker.read_text(encoding="utf-8"))
+        doc["page"] = "PREVIOUS BUNDLE — must survive a failed commit"
+        marker.write_text(json.dumps(doc, ensure_ascii=False, indent=2),
+                          encoding="utf-8")
+        (RUNTIME / "styles.css").write_text(
+            "/* previous stylesheet */\n", encoding="utf-8")
+        (RUNTIME / "assets" / "PREVIOUS-ONLY.jpg").write_bytes(b"old asset")
+        planted = snapshot(RUNTIME)
+        self.assertNotEqual(planted, self.real, "plant did not change anything")
+        return planted
+
+    def residue(self):
+        return sorted(p.name for p in RUNTIME.parent.iterdir()
+                      if p.name.startswith(".runtime-stage-")
+                      or p.name.startswith("runtime.backup-"))
+
+    def test_failure_moving_new_bundle_in_rolls_back(self):
+        planted = self.plant_old_bundle()
+        real_rename, calls = os.rename, []
+
+        def flaky(src, dst):
+            calls.append((src, dst))
+            if len(calls) == 1:            # old bundle moved aside: allow
+                return real_rename(src, dst)
+            if len(calls) == 2:            # new bundle moving in: fail
+                raise OSError(28, "injected: no space left on device")
+            return real_rename(src, dst)   # rollback: allow
+
+        with mock.patch.object(self.mod, "_rename", flaky):
+            rc = self.mod.main()
+        self.assertEqual(rc, 2, "a failed commit must STOP")
+        self.assertEqual(len(calls), 3, "rollback rename was not attempted")
+        self.assertEqual(snapshot(RUNTIME), planted,
+                         "old bundle was not restored byte-for-byte")
+        self.assertEqual(self.residue(), [], "staging/backup left behind")
+
+    def test_failure_moving_old_bundle_aside_changes_nothing(self):
+        planted = self.plant_old_bundle()
+
+        def refuse(src, dst):
+            raise OSError(13, "injected: permission denied")
+
+        with mock.patch.object(self.mod, "_rename", refuse):
+            rc = self.mod.main()
+        self.assertEqual(rc, 2)
+        self.assertEqual(snapshot(RUNTIME), planted)
+        self.assertEqual(self.residue(), [])
+
+    def test_no_mixed_bundle_is_ever_visible(self):
+        """The published dir is all-old or all-new — never half of each."""
+        planted = self.plant_old_bundle()
+        real_rename, calls = os.rename, []
+
+        def flaky(src, dst):
+            calls.append(1)
+            if len(calls) == 2:
+                raise OSError(5, "injected: I/O error")
+            return real_rename(src, dst)
+
+        with mock.patch.object(self.mod, "_rename", flaky):
+            self.mod.main()
+        after = snapshot(RUNTIME)
+        # Every planted file is present and unchanged; no new-bundle file
+        # sneaked in beside them.
+        self.assertEqual(after, planted)
+        self.assertIn("assets/PREVIOUS-ONLY.jpg", after)
+        self.assertIn("previous stylesheet",
+                      (RUNTIME / "styles.css").read_text(encoding="utf-8"))
+
+    def test_successful_commit_replaces_the_whole_bundle(self):
+        planted = self.plant_old_bundle()
+        self.assertEqual(self.mod.main(), 0)
+        after = snapshot(RUNTIME)
+        self.assertEqual(after, self.real, "commit did not fully replace")
+        self.assertNotIn("assets/PREVIOUS-ONLY.jpg", after,
+                         "stale asset survived the swap")
+        self.assertEqual(self.residue(), [])
 
 
 if __name__ == "__main__":

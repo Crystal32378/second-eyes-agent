@@ -30,6 +30,14 @@
 <noscript><p>Recorded results: 1 Shortlist · 2 Needs Review · 3 Remaining. Hero / Product — HAVE (ROBE-5059). Detail — MISSING, not guessed. Enable JavaScript for full per-card reasons.</p></noscript>
 </div>
 <script>
+// DISPLAY-ONLY gloss. The observation vocabulary is bilingual because the
+// archive's folder names are; a token like 藍 is what was actually observed
+// and stays verbatim in results.json. This table only adds an English
+// reading beside it on screen — it never rewrites the evidence, and it is
+// deliberately not applied to the payload or to any exported file.
+const GLOSS = {"膚": "nude", "粉": "pink", "黑": "black", "藍": "blue",
+               "白": "white", "抹胸": "bandeau", "內衣": "underwear",
+               "褲": "bottoms", "深V": "deep-V", "正側背": "front/side/back"};
 fetch("results.json").then(r => r.json()).then(d => {
   const s = d.summary;
   document.getElementById("summary").textContent =
@@ -65,10 +73,10 @@ fetch("results.json").then(r => r.json()).then(d => {
     const trace = document.createElement("p");
     trace.className = "trace";
     const refs = Object.entries(it.observed || {}).filter(([k, v]) => v)
-      .map(([k, v]) => `${k}=${v.value} [${v.ref}]`).join(", ") || "—";
+      .map(([k, v]) => `${k}=${v.value}${GLOSS[v.value] ? ` [${GLOSS[v.value]}]` : ""} (ref ${v.ref})`).join(", ") || "—";
     const srcs = Object.entries(it.signal_sources || {})
       .map(([k, v]) => `${k} ← ${v}`).join(", ") || "—";
-    trace.textContent = `Observed: ${refs} · Signal sources: ${srcs} · Manifest SHA: ${(it.manifest.sha256 || "").slice(0, 12)}…`;
+    trace.textContent = `Observed (verbatim): ${refs} · Signal sources: ${srcs} · Manifest SHA: ${(it.manifest.sha256 || "").slice(0, 12)}…`;
     card.append(reason, trace);
     grid.appendChild(card);
   });

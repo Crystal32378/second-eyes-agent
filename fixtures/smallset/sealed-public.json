@@ -1,0 +1,188 @@
+{
+  "note": "Public replay input: the minimum needed to recompute the local MVP in a clean clone. Derived mechanically from the sealed receipt by tools/make_replay_input.py — never hand-edited. Verdicts and buckets are NOT here; they are recomputed from the brief.",
+  "replay_of": {
+    "receipt": "outputs/smallset-gate_20260912T094617Z.json",
+    "sha256": "15536244669f8e2b6b76f8df5a3e03dc2f2cf4f45e870716c5a759e5b3fca709"
+  },
+  "brief_id": "brief-v1",
+  "model_calls": 0,
+  "items": [
+    {
+      "asset_key": "BACK-5F20",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "藍",
+          "ref": "workroom:frame-full"
+        },
+        "item": {
+          "value": "bra",
+          "ref": "workroom:frame-full"
+        },
+        "shot": {
+          "value": "snapshot",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/BACK-5F20.jpg",
+        "sha256": "0f0b8a254479eed0f1c2a902db9a97137300a86ab33cde2c5209e5373f7992bc",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    },
+    {
+      "asset_key": "IG-262",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "white",
+          "ref": "workroom:frame-full"
+        },
+        "item": {
+          "value": "bra",
+          "ref": "workroom:frame-full"
+        },
+        "shot": {
+          "value": "snapshot",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/IG-262.jpg",
+        "sha256": "074fda082161804fcce6f88660af17af61325c7d1442bf758b3d9e79f76f2c5a",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    },
+    {
+      "asset_key": "IG-277",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "pink",
+          "ref": "workroom:frame-full"
+        },
+        "item": {
+          "value": "panty",
+          "ref": "workroom:frame-full"
+        },
+        "shot": {
+          "value": "product",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/IG-277.jpg",
+        "sha256": "2210d695c6b43059c4a6b614fb793e61442f0854da183f0eaafc0a065452f004",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    },
+    {
+      "asset_key": "IMG-4489",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "pink",
+          "ref": "workroom:frame-full"
+        },
+        "item": {
+          "value": "bra",
+          "ref": "workroom:frame-full"
+        },
+        "shot": {
+          "value": "snapshot",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/IMG-4489.jpg",
+        "sha256": "cf59ada94da7e97df25720b9129f16ebcc9c2b1875abc0fd2a8623abffffe6d6",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    },
+    {
+      "asset_key": "ROBE-5059",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "blue",
+          "ref": "workroom:frame-full"
+        },
+        "item": null,
+        "shot": {
+          "value": "product",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/ROBE-5059.jpg",
+        "sha256": "d3aeced9c128cf92088c555abd0a1f08b5b4db53fbc9c402538803122e95e196",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    },
+    {
+      "asset_key": "WEAR-8106",
+      "evidence_state": "NEW",
+      "observed": {
+        "colour": {
+          "value": "blue",
+          "ref": "workroom:frame-full"
+        },
+        "item": {
+          "value": "bra",
+          "ref": "workroom:frame-full"
+        },
+        "shot": {
+          "value": "snapshot",
+          "ref": "workroom:frame-full"
+        }
+      },
+      "old": {
+        "colour": "none",
+        "item": "none",
+        "shot": "none"
+      },
+      "manifest": {
+        "path": "ui/workroom/assets/WEAR-8106.jpg",
+        "sha256": "5e6bebf02797053c106a101cf19854dd43fe74904abdaff1bd1ad59a131a1d91",
+        "ref_convention": "workroom:frame-full"
+      },
+      "model": "gemini-2.5-flash",
+      "prompt_version": "syn-obs-v1"
+    }
+  ]
+}

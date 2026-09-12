@@ -79,7 +79,7 @@ Expected content: `workroom/brief-established.html`,
    - `/runtime/` renders 1 Shortlist · 2 Needs Review · 3 Remaining.
    - Hero / Product — HAVE (ROBE-5059); Detail — MISSING, not guessed.
    - All 6 photos load; no console errors; 390px width single column.
-   - Workroom pages show "03 View verified 6-image runtime" and reach
+   - Workroom pages show "03 View recorded 6-image run" and reach
      `/runtime/`; the runtime page links back to the 400-photo scenario.
    - ` /runtime/results.json` contains no raw/usage/credentials/private
      paths (re-run `runtime/export_public.py` audit + test suite).
