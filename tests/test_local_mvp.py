@@ -63,13 +63,17 @@ class TestLocalMVP(unittest.TestCase):
         """Clean-clone rule: the evidence the MVP reads is in the repo."""
         import subprocess
         from runtime.local_mvp import REPLAY_PATH, REPLAY_SHA256, SEALED_SHA256
-        self.assertTrue(REPLAY_PATH.is_file())
-        tracked = subprocess.run(
-            ["git", "ls-files", "--error-unmatch",
-             str(REPLAY_PATH.relative_to(ROOT))],
-            cwd=ROOT, capture_output=True)
-        self.assertEqual(tracked.returncode, 0,
-                         "replay input is not tracked by git")
+        self.assertTrue(REPLAY_PATH.is_file(),
+                        "replay input missing — a clean clone cannot run")
+        if (ROOT / ".git").exists():
+            tracked = subprocess.run(
+                ["git", "ls-files", "--error-unmatch",
+                 str(REPLAY_PATH.relative_to(ROOT))],
+                cwd=ROOT, capture_output=True)
+            self.assertEqual(tracked.returncode, 0,
+                             "replay input is not tracked by git")
+        # In an exported tree there is no .git; the file being here at all
+        # is the proof, since only tracked files survive `git archive`.
         raw = REPLAY_PATH.read_bytes()
         import hashlib
         self.assertEqual(hashlib.sha256(raw).hexdigest(), REPLAY_SHA256)

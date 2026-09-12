@@ -192,6 +192,7 @@ def run() -> tuple[dict | None, str | None]:
 
 
 def emit_preview(results: dict, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
     s = results["summary"]
     cov = " · ".join("{}:{} {}".format(c["slot"], c["scene"], c["status"])
                      for c in results["coverage"]["slots"])

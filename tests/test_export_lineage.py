@@ -16,7 +16,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests.support import ROOT, ensure_local_mvp
+
 RUNTIME = ROOT / "ui/runtime"
 LOCAL_MVP = ROOT / "outputs/local-mvp.json"
 
@@ -31,8 +32,7 @@ class TestExportLineage(unittest.TestCase):
     def setUp(self):
         from runtime.export_public import main
         self.main = main
-        self.assertTrue(LOCAL_MVP.is_file(),
-                        "run runtime/local_mvp.py first")
+        ensure_local_mvp()
         self.backup = LOCAL_MVP.read_bytes()
         self.assertEqual(self.main(), 0, "clean export must succeed first")
         self.before = snapshot(RUNTIME)
@@ -134,7 +134,7 @@ class TestCommitAtomicity(unittest.TestCase):
     def setUp(self):
         from runtime import export_public
         self.mod = export_public
-        self.assertTrue(LOCAL_MVP.is_file(), "run runtime/local_mvp.py first")
+        ensure_local_mvp()
         self.assertEqual(self.mod.main(), 0)
         self.real = snapshot(RUNTIME)
 

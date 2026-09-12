@@ -63,6 +63,7 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".webm", ".mkv", ".avi"}
 
 def fail(code: int, out_path: Path, error: str, detail: str,
          partial: list) -> int:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps({
         "complete": False, "error": error, "detail": detail[:500],
         "items_completed": len(partial), "partial": partial,

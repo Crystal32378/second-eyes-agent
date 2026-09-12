@@ -20,6 +20,8 @@ class TestPublicExport(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from runtime.export_public import main
+        from tests.support import ensure_local_mvp
+        ensure_local_mvp()
         assert main() == 0
         cls.public = json.loads((RUNTIME / "results.json").read_text(
             encoding="utf-8"))

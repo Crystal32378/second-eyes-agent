@@ -107,6 +107,7 @@ def emit_preview(results: dict, dest: Path) -> None:
                     it["manifest"]["path"],
                     (it["manifest"]["sha256"] or "")[:12])
                     if it.get("manifest") else "")))
+    dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(
         "<!doctype html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\">"
         "<title>Second Eyes — min-run preview</title></head><body>"

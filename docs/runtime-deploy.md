@@ -107,5 +107,16 @@ Expected content: `workroom/brief-established.html`,
   leaves `ui/runtime/` byte-identical.
 - `tests/test_pages_build.py`: artifact layout, cross-link rewrites, and
   a negative case proving the link checker fails on a broken link.
+- Clean-clone reproducibility: `git archive` of the commit into an empty
+  directory (no `outputs/`, no sealed receipt) runs the full suite green
+  (one skip: the receipt cross-check, which only applies where the receipt
+  exists), recomputes the local MVP, and re-exports a payload byte-identical
+  to the committed one. Evidence comes from the tracked, SHA-locked
+  `fixtures/smallset/sealed-public.json`, derived mechanically by
+  `tools/make_replay_input.py`.
+- Commit atomicity: `runtime/export_public.py` swaps the whole bundle with
+  two renames on one filesystem. Counter-tests plant a different previous
+  bundle, inject an `OSError` at each rename, and assert STOP, a
+  byte-identical old bundle, and no staging or backup residue.
 - `tests/test_viewer_copy.py`: no live-runtime claim, banner wording,
   static-viewer statement, and the 390px nav-wrap rule.
