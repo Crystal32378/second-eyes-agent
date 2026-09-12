@@ -111,23 +111,40 @@ Missing contracts (must add before any live run):
    decisions + refs + pending items; mock SHORTLIST 18 / NEEDS REVIEW 7
    counts stay labelled illustrative until replaced by real run output.
 
-### 5.1 `route()` states → publishing buckets (PROPOSED contract, not implemented)
+### 5.1 Evidence states → brief verdict → buckets (PROPOSED contract, not implemented)
 
-`route()` knows only observed-vs-old on frozen vocab. It knows nothing
-about `brief.json`. Bucket assignment therefore needs a second,
-not-yet-built **brief-gate + coverage pass**. Proposed mapping:
+`route()` outputs a per-photo evidence state only (observed-vs-old on
+frozen vocab). It decides NO bucket. Bucket assignment belongs to the
+not-yet-built **brief-gate**, whose verdict per photo is one of three:
+**符合 / 明確不符 / 證據不足** (against `brief.json`: required scenes,
+hard constraints, channel fit, supplied facts). Coverage (HAVE / MISSING
+per scene; MISSING stays missing) is computed after.
 
-- `CLEAR` → **Shortlist candidate ONLY IF** the brief-gate passes:
-  required scene matches, hard constraints pass (resolution, channel
-  format, no-people rule if stated), supplied facts allow
-  (SKU live / rights-cleared list). If the brief-gate fails or the
-  scene quota is full → **Remaining** with an explicit reason.
-  `route()` alone never shortlists.
-- `CONFLICT` + `UNKNOWN` → **Needs Review** (`human_queue: true`,
-  per `runtime/logging.py`). Each card must name what is blocking,
-  who can resolve it, and what is needed. Never auto-filed, never ranked.
-- `NEW` → **Remaining** (filed quiet, record + ref, unverified;
-  per `agent/loop.py`). Never auto-shortlisted, never pings human.
+- `CLEAR` must still pass the brief-gate. CLEAR + 符合 → Shortlist
+  candidate; CLEAR + 明確不符 → Remaining with reason.
+- `NEW` must also enter the brief-gate; it does NOT default to
+  Remaining. NEW + 符合 → Shortlist candidate; NEW + 明確不符 →
+  Remaining; NEW + 證據不足 → Needs Review.
+- Blocking conflicts go to Needs Review: `CONFLICT` / `UNKNOWN`, or any
+  state where the brief-gate verdict is 證據不足 (cannot tell scene /
+  constraint satisfaction). Each card names what is blocking, who can
+  resolve it, and what is needed. Never auto-filed, never ranked.
+
+Cases (illustrative, rules only):
+- CLEAR + 符合 → Shortlist: observed beige product matches old label
+  AND satisfies requested detail scene, constraints pass, SKU live.
+- CLEAR + 明確不符 → Remaining: observed matches old label BUT fails
+  brief (e.g. wrong scene slot, channel format fails, SKU not live).
+- NEW + 符合 → Shortlist: no old label, but observed satisfies a
+  requested scene with constraints passing (e.g. clean hanging robe
+  fills detail slot). Not default-Remaining.
+- NEW + 證據不足 → Needs Review: observable token exists but scene fit
+  cannot be determined (e.g. crop shows fabric only, cannot tell
+  hero vs detail).
+- CONFLICT → Needs Review: old claims red vs observed beige on the
+  same field; human resolves which record is wrong.
+- UNKNOWN → Needs Review: no valid in-vocab observation with ref;
+  nothing to check against brief, human decides.
 
 Who checks brief conditions: the **brief-gate** (missing component),
 not `route()`. `route()` checks structural comparability
