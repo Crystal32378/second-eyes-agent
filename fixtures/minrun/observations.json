@@ -1,0 +1,58 @@
+{
+  "comment": "Fixed test observations for min-run wiring. No model calls: observed tokens are staged with refs, evidence_state is derived via agent.loop.route. Covers 缺證據 / 明確不符 / 新照片符合; 缺 brief is the same set run with brief=None.",
+  "photos": [
+    {
+      "asset_key": "FIX-NEW-MATCH",
+      "observed": {
+        "colour": {"value": "beige", "ref": "test:frame-full"},
+        "item": {"value": "bra", "ref": "test:frame-full"},
+        "shot": {"value": "product", "ref": "test:frame-full"}
+      },
+      "old": {},
+      "signals": {"scene_claim": "product", "has_people": false, "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+    },
+    {
+      "asset_key": "FIX-CLEAR-MISMATCH",
+      "observed": {
+        "colour": {"value": "beige", "ref": "test:frame-full"},
+        "item": {"value": "bra", "ref": "test:frame-full"},
+        "shot": {"value": "product", "ref": "test:frame-full"}
+      },
+      "old": {"colour": "beige product", "item": "bra", "shot": "product"},
+      "signals": {"scene_claim": "vertical", "has_people": false, "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+    },
+    {
+      "asset_key": "FIX-CLEAR-INSUFFICIENT",
+      "observed": {
+        "colour": {"value": "beige", "ref": "test:frame-full"},
+        "item": {"value": "bra", "ref": "test:frame-full"},
+        "shot": {"value": "detail", "ref": "test:frame-full"}
+      },
+      "old": {"colour": "beige", "item": "bra", "shot": "detail"},
+      "signals": {"scene_claim": "detail", "has_people": false, "long_edge": null, "channel": "instagram", "sku": "NUDE-01"}
+    },
+    {
+      "asset_key": "FIX-UNKNOWN-EMPTY",
+      "observed": {},
+      "old": {"colour": "red dress"},
+      "signals": {"scene_claim": "product", "has_people": false, "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+    },
+    {
+      "asset_key": "FIX-CONFLICT-RELEVANT",
+      "observed": {
+        "colour": {"value": "beige", "ref": "test:frame-full"}
+      },
+      "old": {"colour": "red dress"},
+      "signals": {"scene_claim": "product", "has_people": false, "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+    },
+    {
+      "asset_key": "FIX-NEW-PEOPLE-MISMATCH",
+      "observed": {
+        "colour": {"value": "beige", "ref": "test:frame-full"},
+        "item": {"value": "bra", "ref": "test:frame-full"}
+      },
+      "old": {},
+      "signals": {"scene_claim": "product", "has_people": true, "long_edge": 1400, "channel": "instagram", "sku": "NUDE-01"}
+    }
+  ]
+}
