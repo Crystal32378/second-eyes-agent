@@ -37,3 +37,18 @@ evidence_state, verdict/bucket/reason/pending/resolver, observed
 (path/sha/convention), model, prompt_version, usage, stop_reason,
 full raw response. Partial results + diag on stop. Hand the file to
 Fu for verification; no merge, no deploy, public workroom untouched.
+
+## Run record — 2026-09-12 (first attempt, no anomalies, no reruns)
+
+- File (local, git-ignored): `outputs/smallset-gate_20260912T094617Z.json`
+- `complete: true`, model `gemini-2.5-flash`, prompt `syn-obs-v1`,
+  `model_calls: 6`, `fixture: false`. Zero retries.
+- Summary: Shortlist 0 / Needs Review 6 / Remaining 0. All six routed
+  NEW (manifest old_label "none" injected, as designed) and stopped at
+  Needs Review on the missing person signal under `no_people=true` —
+  the honest outcome this gate was built to verify.
+- Every item: `stop_reason: end_turn`, accumulated token usage recorded
+  (~1600–2150 total tokens each), full raw strict-JSON preserved,
+  refs exactly `workroom:frame-full`, manifest path/sha attached.
+- No schema/quota/provider/custody anomaly encountered. No accuracy
+  claimed: selections are observations with refs, pending human review.
