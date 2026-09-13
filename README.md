@@ -1,5 +1,31 @@
 # Second Eyes — second-eyes-agent
 
+## External visitor path: Sample Case Mode
+
+The new bounded experience lives at **`/try/`** in the staged site. Choose
+1–6 existing public photos, set a supported brief, inspect Shortlist / Needs
+Review / Remaining and coverage, then keep candidates or defer and download
+your editorial decision. It uses **recorded observations and the existing
+deterministic gates**, with no uploads, fresh model calls or server storage of
+visitor choices. The existing Workroom and recorded viewer remain available.
+
+```bash
+python3 tools/build_pages.py --out _site
+python3 -m http.server 8782 --bind 127.0.0.1 --directory _site
+# http://127.0.0.1:8782/try/
+```
+
+See [the exact launch handoff](docs/launch/HANDOFF.md) for source lineage,
+regeneration, tests, privacy boundaries and publication steps. This branch
+has been locally verified; it has not been pushed or deployed by this change.
+
+The hackathon-era record below is historical. Its blanket “not wired” and
+test-count statements do not describe the later six-image runtime or this
+bounded sample. The current recorded runtime is documented in
+[local-mvp](docs/local-mvp.md) and [runtime-deploy](docs/runtime-deploy.md).
+
+## Original hackathon record
+
 Professional track — Agents for Humans Hackathon (Strands Agents SDK).
 
 > Second Eyes hands you a shortlist first.
