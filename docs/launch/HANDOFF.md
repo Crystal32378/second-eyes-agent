@@ -44,6 +44,11 @@ are unchanged. The 400-photo presentation remains an explicitly separate
 study. All six sample observations remain NEW; no UNKNOWN/CONFLICT examples
 are invented. Unknown publishing facts remain visible as pending questions.
 
+The original Astra pass scope remains exact: 404 real source files were
+inventoried; 159 representative previews were attempted; 156 were
+successfully read; 3 HEIC decode failures were recorded; and 12 editorial
+references were selected. This does not mean all 404 files were reviewed.
+
 ## Run and regenerate
 
 From the repository root, a static preview needs only Python:

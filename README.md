@@ -47,8 +47,10 @@ video adapter) is spec/mock, not runtime.
 
 ## Evidence distinction (400-photo demo)
 
-- **404 real source files were scanned** (local IG / IG Reel corpus) and are
-  presented as a **400-photo publishing scenario**: SHORTLIST 18, NEEDS
+- **404 real source files were inventoried** (local IG / IG Reel corpus). The
+  Astra pass attempted 159 representative previews, successfully read 156,
+  recorded 3 HEIC decode failures, and selected 12 editorial references. The
+  resulting presentation is a **400-photo publishing scenario**: SHORTLIST 18, NEEDS
   REVIEW 7, REMAINING 375 (300 brief mismatch + 60 near-duplicates + 15
   technical). Counts and placements in the static UI are illustrative mock
   content with real reference images — not model outputs.
