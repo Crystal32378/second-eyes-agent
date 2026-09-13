@@ -36,10 +36,14 @@
   .lead .image-link{height:470px}
   .lead figcaption{padding-top:2px}
 }
-/* The workroom hides asset codes below 1100px. Here the caption is a
-   display-only name and the asset key is the identity every piece of
-   evidence binds to, so the key stays readable at every width. */
+/* The workroom hides asset codes below 1100px. This is an evidence page:
+   a reader has to be able to tie the photograph on screen back to the
+   lineage data, and the caption is a name we wrote, not identity. So the
+   key stays at every width — set quieter rather than hidden. */
 .asset-code{display:inline!important}
+@media(max-width:1100px){
+  .asset-code{font-size:8px;letter-spacing:.06em;color:var(--muted);opacity:.75}
+}
 /* Two slots, not the workroom's four: keep them tile-sized. */
 .coverage-items{grid-template-columns:repeat(2,minmax(0,290px))!important}
 .verdict{display:inline-block;border:1px solid var(--line);padding:4px 9px;

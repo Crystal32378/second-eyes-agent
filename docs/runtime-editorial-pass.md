@@ -52,17 +52,46 @@ Neither table touches `results.json` or any exported file.
 ## One deliberate divergence from the workroom stylesheet
 
 The workroom hides `.asset-code` below 1100px. The runtime page overrides
-that, because here the caption is a display-only name and the asset key is
-the identity every piece of evidence binds to; losing it on a phone would
-leave a photograph labelled only by a caption we wrote. All other CSS is the
-shared stylesheet, which stays byte-identical (`test_stylesheet_identical`).
+that: this is an evidence page, so a reader has to be able to tie the
+photograph on screen back to the lineage data, and the caption is a name we
+wrote rather than identity. Per Fu's 2026-09-13 ruling the key is set
+quieter on small screens (8px, muted, 75% opacity) rather than hidden. All
+other CSS is the shared stylesheet, which stays byte-identical
+(`test_stylesheet_identical`).
+
+## Proof that captions are inert
+
+`tests/test_caption_is_inert.py` (11 tests) holds the line structurally:
+`CAPTION` is reachable from exactly two helpers that return a string; zones
+come from `d.items.filter(i => i.bucket === b)`; coverage comes from
+`d.coverage.slots`; no line that mentions a caption may also mention
+`bucket`, `coverage`, `slots`, `status`, `summary`, `filter(` or `slotOf`;
+no caption may name an asset absent from the payload; an uncaptioned key
+falls back to showing the key; and the asset key is emitted beside the
+caption in both card layouts.
+
+Behavioural check, run in a browser against the staged artifact: every
+caption was replaced with a deliberately wrong, rotated one
+(`"BACK-5F20": ["WRONG CAPTION FOR IG-262", ...]`) and the page re-rendered.
+Shortlist / Needs Review / Remaining membership, the three counts, both
+coverage tiles and the standfirst came back **identical**. Captions move
+nothing.
+
+(The first version of that probe scraped asset keys out of the cards' free
+text, so the wrong captions matched its own regex and it reported a false
+failure. It now reads the `Photograph:` field. Worth recording: a check can
+be vacuously red as easily as vacuously green.)
 
 ## Not added, on purpose
 
 - No ranking, score, hero winner or ordering claim. Zones come from buckets.
-- No `Ask:` line. The workroom's review cards name who to ask; `resolver` is
-  deliberately not in the public payload, so naming one here would be
-  invented. The card says what is needed, not who owes it.
+- No `Ask:` line, confirmed by Fu's 2026-09-13 ruling. The workroom's review
+  cards name who to ask; `resolver` is deliberately not in the public
+  payload, so naming one here would be invented. The card says what is
+  needed, not who owes it. When resolver becomes a sourced publishing fact
+  supplied by an owner or editor, it can enter the public contract and the
+  line can follow. `test_no_resolver_and_no_invented_owner` fails if either
+  appears before then.
 - No new runtime capability, no endpoint, no live language.
 
 ## Verification
@@ -80,7 +109,7 @@ Rendered by headless Chromium against the staged Pages artifact.
 the viewport, zero console errors, 6/6 images loaded. Measured again with all
 six `Evidence details` forced open: still no overflow at either width.
 
-Full suite 114/114 PASS.
+Full suite 125/125 PASS.
 
 Screenshots: `docs/qa/editorial/`.
 
