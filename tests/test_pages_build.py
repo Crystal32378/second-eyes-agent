@@ -30,6 +30,47 @@ class TestPagesBuild(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
+    def test_favicon_ships_and_every_page_links_it_relatively(self):
+        """One asset at the artifact root; five entries; no absolute host."""
+        self.assertIn("favicon.svg", self.files)
+        # The five published HTML entries, at their two different depths.
+        expected = {
+            "index.html": "favicon.svg",
+            "brief-established.html": "favicon.svg",
+            "brief-missing.html": "favicon.svg",
+            "runtime/index.html": "../favicon.svg",
+            "try/index.html": "../favicon.svg",
+        }
+        for rel, href in expected.items():
+            text = (self.out / rel).read_text(encoding="utf-8")
+            self.assertIn('rel="icon"', text, rel)
+            self.assertIn('href="{}"'.format(href), text, rel)
+            # A repo-relative path that survived the rewrite would 404.
+            self.assertNotIn('href="../workroom/favicon.svg"', text, rel)
+
+    def test_favicon_reference_is_portable_between_hosts(self):
+        """No host or absolute path: Pages sits on a sub-path, Amplify does not."""
+        for rel in ("index.html", "brief-established.html", "brief-missing.html",
+                    "runtime/index.html", "try/index.html"):
+            text = (self.out / rel).read_text(encoding="utf-8")
+            for bad in ('href="/favicon', "crystal32378.github.io",
+                        "second-eyes-agent/favicon", "amplifyapp.com"):
+                self.assertNotIn(bad, text, "{}: {}".format(rel, bad))
+
+    def test_build_stops_when_the_favicon_is_missing(self):
+        """The check must fail on a missing favicon, not pass vacuously."""
+        import tempfile
+        from tools.build_pages import stage, check_links
+        tmp = Path(tempfile.mkdtemp(prefix="pages-nofav-"))
+        try:
+            out = tmp / "_site"
+            self.assertEqual(stage(out), 0)
+            (out / "favicon.svg").unlink()
+            errors = check_links(out)
+            self.assertTrue(any("favicon.svg" in e for e in errors), errors)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_workroom_at_root_runtime_under_runtime(self):
         for rel in ("index.html", "brief-established.html",
                     "brief-missing.html", "styles.css",

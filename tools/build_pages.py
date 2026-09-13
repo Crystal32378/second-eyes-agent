@@ -36,10 +36,14 @@ SAMPLE = ROOT / "ui/sample"
 LINK_REWRITES = {
     "brief-established.html": [('href="../runtime/"', 'href="runtime/"'), ('href="../sample/"', 'href="try/"')],
     "brief-missing.html": [('href="../runtime/"', 'href="runtime/"'), ('href="../sample/"', 'href="try/"')],
-    "try/index.html": [('href="../workroom/brief-established.html"', 'href="../brief-established.html"')],
+    "try/index.html": [
+        ('href="../workroom/brief-established.html"', 'href="../brief-established.html"'),
+        ('href="../workroom/favicon.svg"', 'href="../favicon.svg"'),
+    ],
     "runtime/index.html": [('href="../sample/"', 'href="../try/"'),
         ('href="../workroom/brief-established.html"',
          'href="../brief-established.html"'),
+        ('href="../workroom/favicon.svg"', 'href="../favicon.svg"'),
     ],
 }
 
@@ -47,6 +51,8 @@ LOCAL_REF = re.compile(r'(?:href|src)="([^"#][^"]*)"')
 META_REFRESH = re.compile(r'content="\s*\d+\s*;\s*url=([^"]+)"', re.I)
 # Files the viewer fetches at runtime: not an href/src, so named explicitly.
 FETCHED = ("runtime/results.json", "try/cases.json", "try/integrity.js", "try/core.mjs")
+# Ships in ui/workroom/, so copytree puts it at the artifact root.
+FAVICON = "favicon.svg"
 
 
 def fail(msg: str) -> int:
@@ -115,6 +121,10 @@ def check_links(out: Path) -> list:
         errors.append("artifact root has no index.html")
     if not (out / "runtime/index.html").is_file():
         errors.append("artifact has no runtime/index.html")
+    # Staged from ui/workroom/; every page links it relatively, so a missing
+    # file here would 404 on both hosts rather than fall back to anything.
+    if not (out / FAVICON).is_file():
+        errors.append("artifact has no {}".format(FAVICON))
     for rel in FETCHED:
         if not (out / rel).is_file():
             errors.append("fetched-at-runtime file missing: {}".format(rel))
