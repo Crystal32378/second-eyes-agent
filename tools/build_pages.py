@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage the GitHub Pages artifact — workroom at root, runtime at /runtime/.
+"""Stage Pages — workroom at root, runtime at /runtime/, sample at /try/.
 
 The repo keeps the two pages as siblings (`ui/workroom/`, `ui/runtime/`) so
 they cross-link with `../`. The published site keeps the workroom at the
@@ -28,14 +28,16 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parents[1]
 WORKROOM = ROOT / "ui/workroom"
 RUNTIME = ROOT / "ui/runtime"
+SAMPLE = ROOT / "ui/sample"
 
 # Explicit, reviewable rewrite table: (staged file, from, to).
 # Repo layout  ui/workroom/x.html -> ../runtime/     (sibling)
 # Site layout  /x.html            -> runtime/        (child)
 LINK_REWRITES = {
-    "brief-established.html": [('href="../runtime/"', 'href="runtime/"')],
-    "brief-missing.html": [('href="../runtime/"', 'href="runtime/"')],
-    "runtime/index.html": [
+    "brief-established.html": [('href="../runtime/"', 'href="runtime/"'), ('href="../sample/"', 'href="try/"')],
+    "brief-missing.html": [('href="../runtime/"', 'href="runtime/"'), ('href="../sample/"', 'href="try/"')],
+    "try/index.html": [('href="../workroom/brief-established.html"', 'href="../brief-established.html"')],
+    "runtime/index.html": [('href="../sample/"', 'href="../try/"'),
         ('href="../workroom/brief-established.html"',
          'href="../brief-established.html"'),
     ],
@@ -44,7 +46,7 @@ LINK_REWRITES = {
 LOCAL_REF = re.compile(r'(?:href|src)="([^"#][^"]*)"')
 META_REFRESH = re.compile(r'content="\s*\d+\s*;\s*url=([^"]+)"', re.I)
 # Files the viewer fetches at runtime: not an href/src, so named explicitly.
-FETCHED = ("runtime/results.json",)
+FETCHED = ("runtime/results.json", "try/cases.json", "try/integrity.js", "try/core.mjs")
 
 
 def fail(msg: str) -> int:
@@ -61,6 +63,7 @@ def stage(out: Path) -> int:
         shutil.rmtree(out)
     shutil.copytree(WORKROOM, out)
     shutil.copytree(RUNTIME, out / "runtime")
+    shutil.copytree(SAMPLE, out / "try")
 
     for rel, rewrites in LINK_REWRITES.items():
         f = out / rel
@@ -139,7 +142,7 @@ def main() -> int:
 
     files = manifest(out)
     print("staged {} files to {}".format(len(files), out))
-    print("root URL -> index.html; runtime -> runtime/index.html")
+    print("root URL -> index.html; runtime -> runtime/index.html; sample -> try/index.html")
     if args.print_manifest:
         for f in files:
             print("  {}".format(f))

@@ -1,5 +1,31 @@
 # Second Eyes — second-eyes-agent
 
+## External visitor path: Sample Case Mode
+
+The new bounded experience lives at **`/try/`** in the staged site. Choose
+1–6 existing public photos, set a supported brief, inspect Shortlist / Needs
+Review / Remaining and coverage, then keep candidates or defer and download
+your editorial decision. It uses **recorded observations and the existing
+deterministic gates**, with no uploads, fresh model calls or server storage of
+visitor choices. The existing Workroom and recorded viewer remain available.
+
+```bash
+python3 tools/build_pages.py --out _site
+python3 -m http.server 8782 --bind 127.0.0.1 --directory _site
+# http://127.0.0.1:8782/try/
+```
+
+See [the exact launch handoff](docs/launch/HANDOFF.md) for source lineage,
+regeneration, tests, privacy boundaries and publication steps. This branch
+has been locally verified; it has not been pushed or deployed by this change.
+
+The hackathon-era record below is historical. Its blanket “not wired” and
+test-count statements do not describe the later six-image runtime or this
+bounded sample. The current recorded runtime is documented in
+[local-mvp](docs/local-mvp.md) and [runtime-deploy](docs/runtime-deploy.md).
+
+## Original hackathon record
+
 Professional track — Agents for Humans Hackathon (Strands Agents SDK).
 
 > Second Eyes hands you a shortlist first.
@@ -21,8 +47,10 @@ video adapter) is spec/mock, not runtime.
 
 ## Evidence distinction (400-photo demo)
 
-- **404 real source files were scanned** (local IG / IG Reel corpus) and are
-  presented as a **400-photo publishing scenario**: SHORTLIST 18, NEEDS
+- **404 real source files were inventoried** (local IG / IG Reel corpus). The
+  Astra pass attempted 159 representative previews, successfully read 156,
+  recorded 3 HEIC decode failures, and selected 12 editorial references. The
+  resulting presentation is a **400-photo publishing scenario**: SHORTLIST 18, NEEDS
   REVIEW 7, REMAINING 375 (300 brief mismatch + 60 near-duplicates + 15
   technical). Counts and placements in the static UI are illustrative mock
   content with real reference images — not model outputs.
